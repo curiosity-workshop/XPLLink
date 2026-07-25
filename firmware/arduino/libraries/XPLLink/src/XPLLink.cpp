@@ -442,6 +442,7 @@ namespace phoenix
             cachedRegistrationAccepted_ = true;
             cachedDataRefNext_ = 0;
             cachedCommandNext_ = 0;
+            registerFlag_ = true;
             break;
 
         case XPLCMD_SENDREQUEST:
