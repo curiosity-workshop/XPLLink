@@ -332,8 +332,8 @@ if(PHOENIX_BUILD_XPLANE_PLUGIN)
 
         target_link_libraries(PhoenixXPlanePlugin
             PRIVATE
-                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Mac/XPLM.framework"
-                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Mac/XPWidgets.framework"
+                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Mac/XPLM.framework/Versions/C/XPLM"
+                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Mac/XPWidgets.framework/Versions/C/XPWidgets"
         )
 
         set(PHOENIX_XPLANE_PLUGIN_ABI_DIR "mac_x64")
