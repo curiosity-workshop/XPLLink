@@ -2,6 +2,7 @@
 #include <phoenix/protocol/legacy/LegacyMessage.h>
 #include <phoenix/runtime/LegacyDeviceSession.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <deque>
 #include <iostream>
