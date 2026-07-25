@@ -224,7 +224,7 @@ namespace phoenix::plugin
 
         std::vector<std::string> lines;
         lines.emplace_back(
-            "Curiosity Workshop Phoenix XPLLink Interface");
+            "Curiosity Workshop XPLLink Interface");
         lines.emplace_back(
             std::string{ "Distribution Build: " } +
             __DATE__ +

@@ -52,14 +52,19 @@ namespace
         Complete
     };
 
-    std::filesystem::path phoenixOutputDirectory()
+    constexpr const char* PluginDisplayName = "XPLLink";
+    constexpr const char* PluginSignature = "com.curiosityworkshop.xpllink";
+    constexpr const char* PluginDescription =
+        "XPLLink runtime bridge.";
+
+    std::filesystem::path pluginOutputDirectory()
     {
         char systemPath[4096]{};
         XPLMGetSystemPath(systemPath);
 
         return std::filesystem::path{ systemPath } /
             "Output" /
-            "Phoenix";
+            PluginDisplayName;
     }
 
     void ensureDirectory(
@@ -74,7 +79,7 @@ namespace
     std::filesystem::path preparedPhoenixOutputDirectory()
     {
         auto path =
-            phoenixOutputDirectory();
+            pluginOutputDirectory();
         ensureDirectory(path);
         ensureDirectory(path / "profiles");
         return path;
@@ -436,8 +441,8 @@ namespace
         PhoenixPluginRuntime()
             : outputDirectory_(preparedPhoenixOutputDirectory())
             , profileDirectory_(outputDirectory_ / "profiles")
-            , serialTracePath_(outputDirectory_ / "PhoenixSerial.log")
-            , settingsPath_(outputDirectory_ / "PhoenixSettings.txt")
+            , serialTracePath_(outputDirectory_ / "XPLLinkSerial.log")
+            , settingsPath_(outputDirectory_ / "XPLLinkSettings.txt")
             , serialTrace_(serialTracePath_)
             , deviceRuntime_(
                 serialTrace_,
@@ -598,20 +603,20 @@ namespace
             if (pluginsMenu == nullptr)
             {
                 debugLog(
-                    "Phoenix: unable to find X-Plane plugins menu.\n");
+                    "XPLLink: unable to find X-Plane plugins menu.\n");
                 return;
             }
 
             pluginsMenuItemIndex_ =
                 XPLMAppendMenuItem(
                     pluginsMenu,
-                    "Phoenix",
+                    PluginDisplayName,
                     nullptr,
                     0);
 
             menu_ =
                 XPLMCreateMenu(
-                    "Phoenix",
+                    PluginDisplayName,
                     pluginsMenu,
                     pluginsMenuItemIndex_,
                     menuHandler,
@@ -620,7 +625,7 @@ namespace
             if (menu_ == nullptr)
             {
                 debugLog(
-                    "Phoenix: unable to create plugin menu.\n");
+                    "XPLLink: unable to create plugin menu.\n");
                 return;
             }
 
@@ -660,7 +665,7 @@ namespace
                 0);
 
             debugLog(
-                "Phoenix: plugin menu created.\n");
+                "XPLLink: plugin menu created.\n");
         }
 
         void destroyMenu()
@@ -1547,9 +1552,9 @@ extern "C"
         char* outSig,
         char* outDesc)
     {
-        copyPluginString(outName, "Phoenix");
-        copyPluginString(outSig, "com.xpllink.phoenix");
-        copyPluginString(outDesc, "Phoenix XPLLink runtime bridge.");
+        copyPluginString(outName, PluginDisplayName);
+        copyPluginString(outSig, PluginSignature);
+        copyPluginString(outDesc, PluginDescription);
 
         runtime =
             std::make_unique<PhoenixPluginRuntime>();
@@ -1563,7 +1568,7 @@ extern "C"
             "plugin startup");
 
         XPLMDebugString(
-            "Phoenix: plugin started.\n");
+            "XPLLink: plugin started.\n");
 
         return 1;
     }
@@ -1577,20 +1582,20 @@ extern "C"
         runtime.reset();
 
         XPLMDebugString(
-            "Phoenix: plugin stopped.\n");
+            "XPLLink: plugin stopped.\n");
     }
 
     PLUGIN_API int XPluginEnable()
     {
         XPLMDebugString(
-            "Phoenix: plugin enabled.\n");
+            "XPLLink: plugin enabled.\n");
         return 1;
     }
 
     PLUGIN_API void XPluginDisable()
     {
         XPLMDebugString(
-            "Phoenix: plugin disabled.\n");
+            "XPLLink: plugin disabled.\n");
     }
 
     PLUGIN_API void XPluginReceiveMessage(

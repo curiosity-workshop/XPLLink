@@ -4,6 +4,11 @@ project(Phoenix
     VERSION 0.1.0
     LANGUAGES CXX)
 
+set(PHOENIX_PLUGIN_NAME
+    "XPLLink"
+    CACHE STRING
+    "User-facing X-Plane plugin name and output .xpl base name")
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -24,12 +29,16 @@ set(PHOENIX_XPLANE_ROOT
 set(PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR
     ""
     CACHE PATH
-    "Optional exact directory where Phoenix.xpl should be copied after build")
+    "Optional exact directory where the plugin .xpl should be copied after build")
 
 set(PHOENIX_DISTRIBUTION_DIR
-    "${CMAKE_SOURCE_DIR}/dist/Phoenix"
+    "${CMAKE_SOURCE_DIR}/dist/${PHOENIX_PLUGIN_NAME}"
     CACHE PATH
-    "Directory where distributable Phoenix plugin files are copied after build")
+    "Directory where distributable plugin files are copied after build")
+
+option(PHOENIX_DISTRIBUTE_DEBUG_BUILDS
+    "Allow Debug plugin builds to update the distributable dist/Phoenix folder"
+    OFF)
 
 if(NOT PHOENIX_XPLANE_SDK_PATH AND DEFINED ENV{XPLANE_SDK_ROOT})
     set(PHOENIX_XPLANE_SDK_PATH
@@ -293,7 +302,7 @@ if(PHOENIX_BUILD_XPLANE_PLUGIN)
     set_target_properties(PhoenixXPlanePlugin
         PROPERTIES
             PREFIX ""
-            OUTPUT_NAME "Phoenix"
+            OUTPUT_NAME "${PHOENIX_PLUGIN_NAME}"
             SUFFIX ".xpl"
     )
 
@@ -347,9 +356,9 @@ if(PHOENIX_BUILD_XPLANE_PLUGIN)
 
     if(NOT PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR AND PHOENIX_XPLANE_ROOT)
         set(PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR
-            "${PHOENIX_XPLANE_ROOT}/Resources/plugins/Phoenix/${PHOENIX_XPLANE_PLUGIN_ABI_DIR}"
+            "${PHOENIX_XPLANE_ROOT}/Resources/plugins/${PHOENIX_PLUGIN_NAME}/${PHOENIX_XPLANE_PLUGIN_ABI_DIR}"
             CACHE PATH
-            "Optional exact directory where Phoenix.xpl should be copied after build"
+            "Optional exact directory where the plugin .xpl should be copied after build"
             FORCE)
     endif()
 
@@ -363,11 +372,18 @@ if(PHOENIX_BUILD_XPLANE_PLUGIN)
                     "$<TARGET_FILE:PhoenixXPlanePlugin>"
                     "${PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR}/$<TARGET_FILE_NAME:PhoenixXPlanePlugin>"
             COMMENT
-                    "Deploying Phoenix.xpl to ${PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR}"
+                    "Deploying ${PHOENIX_PLUGIN_NAME}.xpl to ${PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR}"
         )
     endif()
 
-    if(PHOENIX_DISTRIBUTION_DIR)
+    set(PHOENIX_CAN_UPDATE_DISTRIBUTION TRUE)
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND
+        NOT PHOENIX_DISTRIBUTE_DEBUG_BUILDS)
+        set(PHOENIX_CAN_UPDATE_DISTRIBUTION FALSE)
+    endif()
+
+    if(PHOENIX_DISTRIBUTION_DIR AND PHOENIX_CAN_UPDATE_DISTRIBUTION)
         set(PHOENIX_DISTRIBUTION_PLUGIN_DIR
             "${PHOENIX_DISTRIBUTION_DIR}/${PHOENIX_XPLANE_PLUGIN_ABI_DIR}")
 
@@ -380,7 +396,7 @@ if(PHOENIX_BUILD_XPLANE_PLUGIN)
                     "$<TARGET_FILE:PhoenixXPlanePlugin>"
                     "${PHOENIX_DISTRIBUTION_PLUGIN_DIR}/$<TARGET_FILE_NAME:PhoenixXPlanePlugin>"
             COMMENT
-                    "Updating distributable Phoenix plugin at ${PHOENIX_DISTRIBUTION_PLUGIN_DIR}"
+                    "Updating distributable ${PHOENIX_PLUGIN_NAME} plugin at ${PHOENIX_DISTRIBUTION_PLUGIN_DIR}"
         )
     endif()
 endif()

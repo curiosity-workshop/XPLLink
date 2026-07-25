@@ -222,7 +222,7 @@ namespace phoenix::runtime
             return payload.str();
         }
 
-        void tryAcceptStoredProfile(
+        bool tryAcceptStoredProfile(
             const profile::JsonDeviceProfileStore& store,
             DeviceRuntimeManager::DeviceContext& device)
         {
@@ -250,7 +250,7 @@ namespace phoenix::runtime
                     << ").\n";
 
                 logging::info(message.str());
-                return;
+                return false;
             }
 
             if (!device.controller->tryLoadProfile(*loadedProfile))
@@ -263,7 +263,7 @@ namespace phoenix::runtime
                     << "; using legacy registration.\n";
 
                 logging::warning(message.str());
-                return;
+                return false;
             }
 
             device.profileAccepted = true;
@@ -285,6 +285,7 @@ namespace phoenix::runtime
                 << " command(s).\n";
 
             logging::info(message.str());
+            return true;
         }
 
         void saveProfile(
@@ -367,11 +368,15 @@ namespace phoenix::runtime
             options_.profileDirectory
         };
 
-        tryAcceptStoredProfile(
+        const bool profileAccepted =
+            tryAcceptStoredProfile(
             profileStore,
             *device);
 
-        device->controller->requestRegistrations();
+        if (!profileAccepted)
+        {
+            device->controller->requestRegistrations();
+        }
 
         devices_.push_back(std::move(device));
     }
