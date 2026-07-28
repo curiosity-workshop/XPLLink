@@ -7,6 +7,7 @@ namespace phoenix::serial
         Unknown,
         ArduinoCompatible,
         UsbSerial,
+        Suspect,
         Bluetooth,
         BuiltInSerial
     };

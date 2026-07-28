@@ -29,6 +29,9 @@ namespace
         case SerialDeviceKind::UsbSerial:
             return "USB serial";
 
+        case SerialDeviceKind::Suspect:
+            return "suspect serial";
+
         case SerialDeviceKind::Bluetooth:
             return "Bluetooth";
 
@@ -179,6 +182,7 @@ int main()
             phoenix::serial::SerialDeviceClassifier::classify(port);
 
         if (kind == phoenix::serial::SerialDeviceKind::Bluetooth ||
+            kind == phoenix::serial::SerialDeviceKind::Suspect ||
             kind == phoenix::serial::SerialDeviceKind::BuiltInSerial)
         {
             std::ostringstream message;

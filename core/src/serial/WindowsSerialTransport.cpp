@@ -1,6 +1,7 @@
 #include <phoenix/serial/WindowsSerialTransport.h>
 #include <algorithm>
 #include <limits>
+#include <sstream>
 #include <utility>
 
 namespace phoenix::serial
@@ -41,6 +42,8 @@ namespace phoenix::serial
             return true;
         }
 
+        clearLastError();
+
         const std::string devicePath =
             makeWindowsPortPath(portName_);
 
@@ -55,6 +58,8 @@ namespace phoenix::serial
 
         if (handle_ == INVALID_HANDLE_VALUE)
         {
+            captureLastError(
+                "CreateFileA");
             return false;
         }
 
@@ -81,6 +86,8 @@ namespace phoenix::serial
 
         if (!GetCommState(handle_, &configuration))
         {
+            captureLastError(
+                "GetCommState");
             return false;
         }
 
@@ -114,6 +121,8 @@ namespace phoenix::serial
 
         if (!SetCommState(handle_, &configuration))
         {
+            captureLastError(
+                "SetCommState");
             return false;
         }
 
@@ -127,7 +136,14 @@ namespace phoenix::serial
         timeouts.WriteTotalTimeoutMultiplier = 0;
         timeouts.WriteTotalTimeoutConstant = 500;
 
-        return SetCommTimeouts(handle_, &timeouts) != FALSE;
+        if (!SetCommTimeouts(handle_, &timeouts))
+        {
+            captureLastError(
+                "SetCommTimeouts");
+            return false;
+        }
+
+        return true;
     }
 
     void WindowsSerialTransport::close()
@@ -169,6 +185,8 @@ namespace phoenix::serial
             &bytesRead,
             nullptr))
         {
+            captureLastError(
+                "ReadFile");
             return 0;
         }
 
@@ -198,6 +216,8 @@ namespace phoenix::serial
             &bytesWritten,
             nullptr))
         {
+            captureLastError(
+                "WriteFile");
             return 0;
         }
 
@@ -208,5 +228,44 @@ namespace phoenix::serial
         WindowsSerialTransport::portName() const
     {
         return portName_;
+    }
+
+    DWORD WindowsSerialTransport::lastErrorCode() const
+    {
+        return lastErrorCode_;
+    }
+
+    const std::string& WindowsSerialTransport::lastErrorMessage() const
+    {
+        return lastErrorMessage_;
+    }
+
+    void WindowsSerialTransport::captureLastError(
+        const char* operation)
+    {
+        lastErrorCode_ =
+            GetLastError();
+
+        std::ostringstream message;
+        message
+            << operation
+            << " failed";
+
+        if (lastErrorCode_ != ERROR_SUCCESS)
+        {
+            message
+                << " with Win32 error "
+                << lastErrorCode_;
+        }
+
+        lastErrorMessage_ =
+            message.str();
+    }
+
+    void WindowsSerialTransport::clearLastError()
+    {
+        lastErrorCode_ =
+            ERROR_SUCCESS;
+        lastErrorMessage_.clear();
     }
 }

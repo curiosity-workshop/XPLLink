@@ -56,6 +56,17 @@ namespace phoenix::serial
         }
 
         /*
+         * Some simulator controls expose a broken/generic USB serial
+         * interface with no real vendor/product identity. Treat those as
+         * suspect instead of spending probe time on them.
+         */
+        if (contains(hardwareId, "VID_0000") &&
+            contains(hardwareId, "PID_0000"))
+        {
+            return SerialDeviceKind::Suspect;
+        }
+
+        /*
          * Official Arduino USB vendor ID.
          *
          * This identifies likely Arduino hardware, not necessarily

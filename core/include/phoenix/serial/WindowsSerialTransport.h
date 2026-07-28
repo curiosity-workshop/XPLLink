@@ -50,13 +50,20 @@ namespace phoenix::serial
             std::span<const std::byte> data) override;
 
         const std::string& portName() const;
+        DWORD lastErrorCode() const;
+        const std::string& lastErrorMessage() const;
 
     private:
         bool configurePort();
+        void captureLastError(
+            const char* operation);
+        void clearLastError();
 
         std::string portName_;
         std::uint32_t baudRate_;
         WindowsSerialControlMode controlMode_;
         HANDLE handle_ = INVALID_HANDLE_VALUE;
+        DWORD lastErrorCode_ = ERROR_SUCCESS;
+        std::string lastErrorMessage_;
     };
 }

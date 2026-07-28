@@ -98,6 +98,9 @@ namespace
         case SerialDeviceKind::UsbSerial:
             return "USB serial";
 
+        case SerialDeviceKind::Suspect:
+            return "suspect serial";
+
         case SerialDeviceKind::Bluetooth:
             return "Bluetooth";
 
@@ -126,6 +129,74 @@ namespace
         }
 
         return "unknown control mode";
+    }
+
+    void logSerialPortInformation(
+        const phoenix::serial::SerialPortInfo& port,
+        phoenix::serial::SerialDeviceKind kind,
+        std::string_view action)
+    {
+        std::ostringstream message;
+        message
+            << "Phoenix: serial port "
+            << port.portName
+            << " "
+            << action
+            << ".\n"
+            << "  Classification: "
+            << deviceKindName(kind)
+            << "\n"
+            << "  Name: "
+            << port.displayName
+            << "\n"
+            << "  Manufacturer: "
+            << port.manufacturer
+            << "\n"
+            << "  Hardware ID: "
+            << port.hardwareId
+            << "\n";
+
+        XPLMDebugString(message.str().c_str());
+    }
+
+    void logProbeEvent(
+        const phoenix::serial::SerialPortInfo& port,
+        phoenix::serial::NativeSerialControlMode mode,
+        std::string_view event)
+    {
+        std::ostringstream message;
+        message
+            << "Phoenix: probe "
+            << event
+            << " on "
+            << port.portName
+            << " ("
+            << deviceKindName(port.kind)
+            << ", "
+            << controlModeName(mode)
+            << ").\n";
+
+        XPLMDebugString(message.str().c_str());
+    }
+
+    std::string transportDiagnostic(
+        const phoenix::transport::IByteTransport* transport)
+    {
+#if defined(_WIN32)
+        const auto* windowsTransport =
+            dynamic_cast<const phoenix::serial::WindowsSerialTransport*>(
+                transport);
+
+        if (windowsTransport != nullptr &&
+            !windowsTransport->lastErrorMessage().empty())
+        {
+            return " (" + windowsTransport->lastErrorMessage() + ")";
+        }
+#else
+        (void)transport;
+#endif
+
+        return {};
     }
 
     std::string extractQuotedString(
@@ -915,8 +986,13 @@ namespace
                     phoenix::serial::SerialDeviceClassifier::classify(port);
 
                 if (kind == phoenix::serial::SerialDeviceKind::Bluetooth ||
+                    kind == phoenix::serial::SerialDeviceKind::Suspect ||
                     kind == phoenix::serial::SerialDeviceKind::BuiltInSerial)
                 {
+                    logSerialPortInformation(
+                        port,
+                        kind,
+                        "skipped");
                     continue;
                 }
 
@@ -924,6 +1000,10 @@ namespace
                     port;
                 probePort.kind =
                     kind;
+                logSerialPortInformation(
+                    probePort,
+                    kind,
+                    "queued for probing");
                 portsToProbe_.push_back(
                     std::move(probePort));
             }
@@ -1004,8 +1084,21 @@ namespace
             probe.nextRequestAt =
                 now + ProbeOpenSettleDelay;
 
+            logProbeEvent(
+                probe.port,
+                probe.controlMode,
+                "starting");
+
             if (!probe.transport->open())
             {
+                const auto diagnostic =
+                    transportDiagnostic(
+                        probe.transport.get());
+                logProbeEvent(
+                    probe.port,
+                    probe.controlMode,
+                    "open failed" + diagnostic);
+
                 if (retryProbeWithAlternateControlMode(
                     probe,
                     now,
@@ -1019,6 +1112,11 @@ namespace
                     "Unable to open " + probe.port.portName + ".";
                 return;
             }
+
+            logProbeEvent(
+                probe.port,
+                probe.controlMode,
+                "opened, waiting for settle");
 
             engagementStatus_ =
                 "Waiting for " + probe.port.portName +
@@ -1073,6 +1171,11 @@ namespace
                 const auto portName =
                     activeProbe_->port.portName;
 
+                logProbeEvent(
+                    activeProbe_->port,
+                    activeProbe_->controlMode,
+                    "timed out");
+
                 if (retryActiveProbeWithAlternateControlMode(
                     now,
                     "no response"))
@@ -1126,6 +1229,11 @@ namespace
             if (probe.transport &&
                 probe.transport->isOpen())
             {
+                logProbeEvent(
+                    probe.port,
+                    probe.controlMode,
+                    "closing before retry");
+
                 probe.transport->close();
             }
 
@@ -1147,10 +1255,28 @@ namespace
             probe.requestsStarted =
                 false;
 
+            logProbeEvent(
+                probe.port,
+                probe.controlMode,
+                "retry starting");
+
             if (!probe.transport->open())
             {
+                const auto diagnostic =
+                    transportDiagnostic(
+                        probe.transport.get());
+                logProbeEvent(
+                    probe.port,
+                    probe.controlMode,
+                    "retry open failed" + diagnostic);
+
                 return false;
             }
+
+            logProbeEvent(
+                probe.port,
+                probe.controlMode,
+                "retry opened, waiting for settle");
 
             engagementStatus_ =
                 "Retrying " + probe.port.portName +
@@ -1193,6 +1319,20 @@ namespace
             const std::size_t bytesRead =
                 probe.transport->read(buffer);
 
+            if (bytesRead > 0)
+            {
+                std::ostringstream message;
+                message
+                    << "Phoenix: probe read "
+                    << bytesRead
+                    << " byte(s) from "
+                    << probe.port.portName
+                    << " ("
+                    << controlModeName(probe.controlMode)
+                    << ").\n";
+                debugLog(message.str());
+            }
+
             if (serialTrace_.isEnabled() &&
                 serialTrace_.isOpen() &&
                 bytesRead > 0)
@@ -1220,12 +1360,30 @@ namespace
                 {
                     probe.device.name =
                         extractQuotedString(frame.payload);
+
+                    std::ostringstream message;
+                    message
+                        << "Phoenix: probe received name from "
+                        << probe.port.portName
+                        << ": "
+                        << probe.device.name
+                        << ".\n";
+                    debugLog(message.str());
                 }
                 else if (frame.command ==
                     phoenix::protocol::legacy::versionResponseCommand)
                 {
                     probe.device.version =
                         extractQuotedString(frame.payload);
+
+                    std::ostringstream message;
+                    message
+                        << "Phoenix: probe received version from "
+                        << probe.port.portName
+                        << ": "
+                        << probe.device.version
+                        << ".\n";
+                    debugLog(message.str());
                 }
 
                 if (!probe.device.name.empty())
@@ -1252,6 +1410,11 @@ namespace
                 activeProbe_->device.name;
             const auto deviceVersion =
                 activeProbe_->device.version;
+
+            logProbeEvent(
+                activeProbe_->port,
+                activeProbe_->controlMode,
+                "accepted");
 
             deviceRuntime_.addDevice(
                 portName,
@@ -1294,6 +1457,11 @@ namespace
             if (activeProbe_->transport &&
                 activeProbe_->transport->isOpen())
             {
+                logProbeEvent(
+                    activeProbe_->port,
+                    activeProbe_->controlMode,
+                    "closing");
+
                 activeProbe_->transport->close();
             }
 
