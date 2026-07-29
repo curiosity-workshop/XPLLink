@@ -124,6 +124,7 @@ namespace phoenix
         void datarefWrite(dref_handle handle, float value);
         void datarefWrite(dref_handle handle, float value, int arrayElement);
         void datarefTouch(dref_handle handle);
+        void requestDataRefRefresh(dref_handle handle);
 
         void requestUpdates(dref_handle handle, int rate, float precision);
         void requestUpdates(dref_handle handle, int rate, float precision, int arrayElement);
@@ -172,6 +173,7 @@ namespace phoenix
         bool connectionStatus_ = false;
         bool outboundTrafficEnabled_ = false;
         bool cachedRegistrationAccepted_ = false;
+        bool handleAssignmentReceived_ = false;
         int cachedDataRefCount_ = 0;
         int cachedCommandCount_ = 0;
         int cachedDataRefNext_ = 0;

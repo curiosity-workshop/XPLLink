@@ -32,7 +32,7 @@ namespace phoenix::runtime
     public:
         LegacyUpdateScheduler(
             LegacyDeviceSession& session,
-            const LegacyDeviceController& controller,
+            LegacyDeviceController& controller,
             xplane::IXPlaneBridge& xplane,
             LegacyUpdateSchedulerOptions options = {});
 
@@ -56,7 +56,8 @@ namespace phoenix::runtime
             std::chrono::steady_clock::time_point now);
         bool shouldSend(
             const SubscriptionState& state,
-            const std::string& valueToSend) const;
+            const std::string& valueToSend,
+            bool forceUpdate) const;
         struct QueuedUpdate
         {
             std::vector<std::byte> bytes;
@@ -72,7 +73,7 @@ namespace phoenix::runtime
             std::size_t pendingBytes) const;
 
         LegacyDeviceSession& session_;
-        const LegacyDeviceController& controller_;
+        LegacyDeviceController& controller_;
         xplane::IXPlaneBridge& xplane_;
         LegacyUpdateSchedulerOptions options_;
         std::vector<SubscriptionState> states_;

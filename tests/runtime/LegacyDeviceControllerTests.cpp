@@ -467,8 +467,22 @@ int main()
 
     passed &= expect(tick.messagesProcessed == 1, "missing dataref should process");
     passed &= expect(
-        transport.writtenText().ends_with("[D,-02,\"sim/missing\"]"),
+        transport.writtenText().ends_with("[D,-1,\"sim/missing\"]"),
         "missing dataref response failed");
+    passed &= expect(
+        controller.dataRefs().size() == 2,
+        "missing dataref should not create a binding");
+
+    transport.pushIncoming("[m,\"sim/missing/command\"]");
+    tick = controller.tick();
+
+    passed &= expect(tick.messagesProcessed == 1, "missing command should process");
+    passed &= expect(
+        transport.writtenText().ends_with("[C,-1,\"sim/missing/command\"]"),
+        "missing command response failed");
+    passed &= expect(
+        controller.commands().size() == 1,
+        "missing command should not create a binding");
 
     {
         FakeTransport profileTransport;
@@ -528,6 +542,9 @@ int main()
         passed &= expect(
             profileController.updateSubscriptions()[0].rate == 250,
             "profile update subscription rate should be retained");
+        passed &= expect(
+            profileController.updateSubscriptions()[0].forceUpdate,
+            "profile update subscription should force refresh after cache load");
 
         profileTransport.pushIncoming("[y,0,2,100,0.0000]");
         auto profileTick = profileController.tick();

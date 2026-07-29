@@ -183,7 +183,7 @@ namespace phoenix::runtime
 
     LegacyUpdateScheduler::LegacyUpdateScheduler(
         LegacyDeviceSession& session,
-        const LegacyDeviceController& controller,
+        LegacyDeviceController& controller,
         xplane::IXPlaneBridge& xplane,
         LegacyUpdateSchedulerOptions options)
         : session_(session),
@@ -203,13 +203,15 @@ namespace phoenix::runtime
             return result;
         }
 
-        for (const auto& subscription :
+        for (auto& subscription :
             controller_.updateSubscriptions())
         {
             auto& state =
                 stateFor(subscription, now);
 
-            if (state.hasSentValue && now < state.nextDue)
+            if (!subscription.forceUpdate &&
+                state.hasSentValue &&
+                now < state.nextDue)
             {
                 continue;
             }
@@ -235,8 +237,12 @@ namespace phoenix::runtime
                 bucketedValue(subscription, value.value);
 
             if (!value.found ||
-                !shouldSend(state, valueToSend))
+                !shouldSend(
+                    state,
+                    valueToSend,
+                    subscription.forceUpdate))
             {
+                subscription.forceUpdate = false;
                 state.nextDue =
                     now + subscriptionRate(subscription);
                 continue;
@@ -257,6 +263,7 @@ namespace phoenix::runtime
             }
 
             session_.queueBytes(update.bytes);
+            subscription.forceUpdate = false;
             state.lastValue = update.value;
             state.hasSentValue = true;
             state.nextDue =
@@ -322,8 +329,14 @@ namespace phoenix::runtime
 
     bool LegacyUpdateScheduler::shouldSend(
         const SubscriptionState& state,
-        const std::string& valueToSend) const
+        const std::string& valueToSend,
+        bool forceUpdate) const
     {
+        if (forceUpdate)
+        {
+            return true;
+        }
+
         if (!state.hasSentValue)
         {
             return true;

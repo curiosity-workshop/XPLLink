@@ -92,6 +92,7 @@ namespace phoenix::runtime
         const std::vector<LegacyDataRefBinding>& dataRefs() const;
         const std::vector<LegacyCommandBinding>& commands() const;
         const std::vector<LegacyUpdateSubscription>& updateSubscriptions() const;
+        std::vector<LegacyUpdateSubscription>& updateSubscriptions();
 
         bool registrationsRequested() const;
         bool dataFlowPaused() const;
@@ -118,6 +119,8 @@ namespace phoenix::runtime
 
         void handleCommandEvent(
             const protocol::legacy::CommandEvent& message);
+
+        void requestDataRefRefresh(int handle);
 
         void clearLoadedProfile();
 

@@ -47,7 +47,7 @@ namespace phoenix::runtime
         std::string failedLookupPayload(std::string_view name)
         {
             std::ostringstream payload;
-            payload << ",-02,\"" << name << '"';
+            payload << ",-1,\"" << name << '"';
             return payload.str();
         }
 
@@ -168,6 +168,12 @@ namespace phoenix::runtime
 
     const std::vector<LegacyUpdateSubscription>&
         LegacyDeviceController::updateSubscriptions() const
+    {
+        return updateSubscriptions_;
+    }
+
+    std::vector<LegacyUpdateSubscription>&
+        LegacyDeviceController::updateSubscriptions()
     {
         return updateSubscriptions_;
     }
@@ -319,6 +325,7 @@ namespace phoenix::runtime
                     if (const auto* binding = findDataRef(value.handle))
                     {
                         xplane_.touchDataRef(binding->name, binding->handle);
+                        requestDataRefRefresh(binding->handle);
                     }
                 }
                 else if constexpr (std::is_same_v<Message, protocol::legacy::DataFlowPause>)
@@ -525,6 +532,17 @@ namespace phoenix::runtime
                 binding->handle,
                 message.triggerCount);
             break;
+        }
+    }
+
+    void LegacyDeviceController::requestDataRefRefresh(int handle)
+    {
+        for (auto& subscription : updateSubscriptions_)
+        {
+            if (subscription.handle == handle)
+            {
+                subscription.forceUpdate = true;
+            }
         }
     }
 

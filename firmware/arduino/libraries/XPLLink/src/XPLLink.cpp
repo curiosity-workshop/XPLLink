@@ -313,6 +313,11 @@ namespace phoenix
         transmitPacket();
     }
 
+    void XPLLink::requestDataRefRefresh(dref_handle handle)
+    {
+        datarefTouch(handle);
+    }
+
     void XPLLink::sendName()
     {
         if (deviceName_ != nullptr)
@@ -452,6 +457,7 @@ namespace phoenix
         case XPLRESPONSE_DATAREF:
         case XPLRESPONSE_COMMAND:
             parseInt(&handleAssignment_, receiveBuffer_, 2);
+            handleAssignmentReceived_ = true;
             break;
 
         case XPLCMD_DATAREFUPDATEINT:
@@ -756,10 +762,11 @@ namespace phoenix
         transmitPacket();
 
         handleAssignment_ = XPL_HANDLE_INVALID;
+        handleAssignmentReceived_ = false;
         const unsigned long startTime = millis();
 
         while (millis() - startTime < XPL_RESPONSE_TIMEOUT &&
-            handleAssignment_ < 0)
+            !handleAssignmentReceived_)
         {
             processSerial();
         }
@@ -805,10 +812,11 @@ namespace phoenix
         transmitPacket();
 
         handleAssignment_ = XPL_HANDLE_INVALID;
+        handleAssignmentReceived_ = false;
         const unsigned long startTime = millis();
 
         while (millis() - startTime < XPL_RESPONSE_TIMEOUT &&
-            handleAssignment_ < 0)
+            !handleAssignmentReceived_)
         {
             processSerial();
         }

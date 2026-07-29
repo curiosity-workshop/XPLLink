@@ -254,6 +254,9 @@ int main()
         schedulerTick.updatesQueued == 1,
         "first scheduler tick should force an update");
     passed &= expect(
+        !controller.updateSubscriptions()[0].forceUpdate,
+        "first scheduler tick should consume force update");
+    passed &= expect(
         transport.writtenText() == "[D,0][1,0,1]",
         "first scheduler update frame failed");
     passed &= expect(
@@ -275,9 +278,29 @@ int main()
         schedulerTick.updatesQueued == 0,
         "scheduler should suppress unchanged values");
 
+    transport.pushIncoming("[d,0]");
+    controllerTick = controller.tick();
+
+    passed &= expect(
+        controllerTick.messagesProcessed == 1,
+        "dataref touch should process");
+    passed &= expect(
+        controller.updateSubscriptions()[0].forceUpdate,
+        "dataref touch should request a refresh");
+
+    schedulerTick =
+        scheduler.tick(start + std::chrono::milliseconds{ 150 });
+
+    passed &= expect(
+        schedulerTick.updatesQueued == 1,
+        "dataref touch should force same-value refresh before rate expires");
+    passed &= expect(
+        transport.writtenText().ends_with("[1,0,1]"),
+        "forced refresh frame failed");
+
     xplane.currentValue = "0";
     schedulerTick =
-        scheduler.tick(start + std::chrono::milliseconds{ 200 });
+        scheduler.tick(start + std::chrono::milliseconds{ 250 });
 
     passed &= expect(
         schedulerTick.updatesQueued == 1,
