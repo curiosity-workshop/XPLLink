@@ -1,15 +1,15 @@
 #include <XPLLink.h>
 
-XPLLink XP(Serial);
+XPLLink link(Serial);
 
 dref_handle drefNavLights = XPL_HANDLE_INVALID;
 
 void xplRegister()
 {
     drefNavLights =
-        XP.registerDataRef(F("sim/cockpit2/switches/navigation_lights_on"));
+        link.registerDataRef(F("sim/cockpit2/switches/navigation_lights_on"));
 
-    XP.requestUpdates(drefNavLights, 100, 0.0000);
+    link.requestUpdates(drefNavLights, 100, 0.0000);
 }
 
 void xplShutdown()
@@ -33,7 +33,7 @@ void setup()
     digitalWrite(LED_BUILTIN, LOW);
 
     Serial.begin(XPL_BAUDRATE);
-    XP.begin(
+    link.begin(
         "XPLLink Cache Test",
         &xplRegister,
         &xplShutdown,
@@ -42,5 +42,5 @@ void setup()
 
 void loop()
 {
-    XP.xloop();
+    link.xloop();
 }

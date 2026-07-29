@@ -1,11 +1,11 @@
-#include <phoenix/discovery/LegacyXplproProbe.h>
-#include <phoenix/dev/DevelopmentDeviceLoop.h>
-#include <phoenix/logging/Log.h>
-#include <phoenix/logging/SerialTraceLogger.h>
-#include <phoenix/serial/NativeSerial.h>
-#include <phoenix/serial/SerialDeviceClassifier.h>
-#include <phoenix/serial/SerialDeviceKind.h>
-#include <phoenix/transport/IByteTransport.h>
+#include <xpllink/discovery/LegacyXplproProbe.h>
+#include <xpllink/dev/DevelopmentDeviceLoop.h>
+#include <xpllink/logging/Log.h>
+#include <xpllink/logging/SerialTraceLogger.h>
+#include <xpllink/serial/NativeSerial.h>
+#include <xpllink/serial/SerialDeviceClassifier.h>
+#include <xpllink/serial/SerialDeviceKind.h>
+#include <xpllink/transport/IByteTransport.h>
 
 #include <chrono>
 #include <filesystem>
@@ -17,9 +17,9 @@
 namespace
 {
     std::string_view deviceKindName(
-        phoenix::serial::SerialDeviceKind kind)
+        xpllink::serial::SerialDeviceKind kind)
     {
-        using phoenix::serial::SerialDeviceKind;
+        using xpllink::serial::SerialDeviceKind;
 
         switch (kind)
         {
@@ -45,9 +45,9 @@ namespace
     }
 
     std::string_view controlModeName(
-        phoenix::serial::NativeSerialControlMode mode)
+        xpllink::serial::NativeSerialControlMode mode)
     {
-        using phoenix::serial::NativeSerialControlMode;
+        using xpllink::serial::NativeSerialControlMode;
 
         switch (mode)
         {
@@ -62,8 +62,8 @@ namespace
     }
 
     void printPortInformation(
-        const phoenix::serial::SerialPortInfo& port,
-        phoenix::serial::SerialDeviceKind kind)
+        const xpllink::serial::SerialPortInfo& port,
+        xpllink::serial::SerialDeviceKind kind)
     {
         std::ostringstream message;
 
@@ -78,13 +78,13 @@ namespace
             << "  Hardware ID:    "
             << port.hardwareId << "\n\n";
 
-        phoenix::logging::info(message.str());
+        xpllink::logging::info(message.str());
     }
 
     std::filesystem::path sourceRoot()
     {
-#ifdef PHOENIX_SOURCE_DIR
-        return PHOENIX_SOURCE_DIR;
+#ifdef XPLLINK_SOURCE_DIR
+        return XPLLINK_SOURCE_DIR;
 #else
         return std::filesystem::current_path();
 #endif
@@ -93,12 +93,12 @@ namespace
 
 int main()
 {
-    phoenix::logging::info(
-        "Phoenix starting\n"
+    xpllink::logging::info(
+        "XPLLink starting\n"
         "Enumerating serial ports...\n\n");
 
-    phoenix::serial::NativeSerialEnumerator enumerator;
-    phoenix::serial::NativeSerialTransportFactory transportFactory;
+    xpllink::serial::NativeSerialEnumerator enumerator;
+    xpllink::serial::NativeSerialTransportFactory transportFactory;
 
     const auto ports = enumerator.enumerate();
 
@@ -110,14 +110,14 @@ int main()
         << ports.size()
         << "\n\n";
 
-        phoenix::logging::info(message.str());
+        xpllink::logging::info(message.str());
     }
 
     if (ports.empty())
     {
-        phoenix::logging::info(
+        xpllink::logging::info(
             "No serial ports were detected.\n"
-            "Phoenix stopped");
+            "XPLLink stopped");
 
         return 0;
     }
@@ -125,23 +125,23 @@ int main()
     for (const auto& port : ports)
     {
         const auto kind =
-            phoenix::serial::SerialDeviceClassifier::classify(port);
+            xpllink::serial::SerialDeviceClassifier::classify(port);
 
         printPortInformation(port, kind);
     }
 
-    phoenix::logging::info(
+    xpllink::logging::info(
         "Beginning XPLPro device discovery...\n\n");
 
-    phoenix::discovery::LegacyXplproProbe probe{
+    xpllink::discovery::LegacyXplproProbe probe{
         std::chrono::milliseconds{ 50 },
         std::chrono::seconds{ 2 },
         std::chrono::seconds{ 3 }
     };
     const auto serialTracePath =
-        sourceRoot() / "PhoenixSerial.log";
+        sourceRoot() / "XPLLinkSerial.log";
 
-    phoenix::logging::SerialTraceLogger serialTrace{
+    xpllink::logging::SerialTraceLogger serialTrace{
         serialTracePath
     };
 
@@ -154,7 +154,7 @@ int main()
             << serialTracePath.string()
             << "\n\n";
 
-        phoenix::logging::info(
+        xpllink::logging::info(
             message.str());
     }
     else
@@ -166,12 +166,12 @@ int main()
             << serialTracePath.string()
             << " for serial tracing.\n\n";
 
-        phoenix::logging::warning(
+        xpllink::logging::warning(
             message.str());
     }
 
     std::size_t devicesFound = 0;
-    phoenix::dev::DevelopmentDeviceManager deviceManager{
+    xpllink::dev::DevelopmentDeviceManager deviceManager{
         serialTrace,
         sourceRoot() / "profiles"
     };
@@ -179,11 +179,11 @@ int main()
     for (const auto& port : ports)
     {
         const auto kind =
-            phoenix::serial::SerialDeviceClassifier::classify(port);
+            xpllink::serial::SerialDeviceClassifier::classify(port);
 
-        if (kind == phoenix::serial::SerialDeviceKind::Bluetooth ||
-            kind == phoenix::serial::SerialDeviceKind::Suspect ||
-            kind == phoenix::serial::SerialDeviceKind::BuiltInSerial)
+        if (kind == xpllink::serial::SerialDeviceKind::Bluetooth ||
+            kind == xpllink::serial::SerialDeviceKind::Suspect ||
+            kind == xpllink::serial::SerialDeviceKind::BuiltInSerial)
         {
             std::ostringstream message;
 
@@ -194,7 +194,7 @@ int main()
                 << deviceKindName(kind)
                 << ".\n\n";
 
-            phoenix::logging::info(message.str());
+            xpllink::logging::info(message.str());
 
             continue;
         }
@@ -210,15 +210,15 @@ int main()
             << deviceKindName(kind)
             << '\n';
 
-            phoenix::logging::info(message.str());
+            xpllink::logging::info(message.str());
         }
 
-        std::unique_ptr<phoenix::transport::IByteTransport> transport;
-        std::optional<phoenix::discovery::DiscoveredDevice> device;
+        std::unique_ptr<xpllink::transport::IByteTransport> transport;
+        std::optional<xpllink::discovery::DiscoveredDevice> device;
 
-        const phoenix::serial::NativeSerialControlMode controlModes[] = {
-            phoenix::serial::NativeSerialControlMode::DtrRtsDisabled,
-            phoenix::serial::NativeSerialControlMode::DtrRtsEnabled
+        const xpllink::serial::NativeSerialControlMode controlModes[] = {
+            xpllink::serial::NativeSerialControlMode::DtrRtsDisabled,
+            xpllink::serial::NativeSerialControlMode::DtrRtsEnabled
         };
 
         for (const auto controlMode : controlModes)
@@ -229,7 +229,7 @@ int main()
                 << "  Trying "
                 << controlModeName(controlMode)
                 << "...\n";
-            phoenix::logging::info(message.str());
+            xpllink::logging::info(message.str());
 
             transport =
                 transportFactory.create(
@@ -239,19 +239,19 @@ int main()
 
             if (!transport->open())
             {
-                phoenix::logging::warning(
+                xpllink::logging::warning(
                     "  Unable to open port with this control mode.\n");
                 continue;
             }
 
-            phoenix::logging::info(
+            xpllink::logging::info(
                 "  Port opened successfully.\n"
                 "  Sending XPLPro identity requests...\n");
 
             device =
                 probe.probe(
                 *transport,
-                phoenix::discovery::LegacyXplproProbeTrace{
+                xpllink::discovery::LegacyXplproProbeTrace{
                     .serialTrace = &serialTrace,
                     .portName = port.portName
                 });
@@ -261,7 +261,7 @@ int main()
                 break;
             }
 
-            phoenix::logging::info(
+            xpllink::logging::info(
                 "  No valid XPLPro response received with this control mode.\n");
 
             transport->close();
@@ -280,7 +280,7 @@ int main()
                 << "  Device version: "
                 << device->version << '\n';
 
-            phoenix::logging::info(message.str());
+            xpllink::logging::info(message.str());
 
             deviceManager.addDevice(
                 port.portName,
@@ -290,12 +290,12 @@ int main()
         }
         else
         {
-            phoenix::logging::info(
+            xpllink::logging::info(
                 "  No valid XPLPro response received.\n");
 
             transport->close();
 
-            phoenix::logging::info("  Port closed.\n\n");
+            xpllink::logging::info("  Port closed.\n\n");
         }
     }
 
@@ -309,9 +309,9 @@ int main()
         << "XPLPro devices found: "
         << devicesFound
         << '\n'
-        << "Phoenix stopped\n";
+        << "XPLLink stopped\n";
 
-        phoenix::logging::info(message.str());
+        xpllink::logging::info(message.str());
     }
 
     return 0;

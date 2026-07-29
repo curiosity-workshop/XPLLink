@@ -1,4 +1,4 @@
-#include <phoenix/serial/WindowsSerialEnumerator.h>
+#include <xpllink/serial/WindowsSerialEnumerator.h>
 
 #include <Windows.h>
 #include <SetupAPI.h>
@@ -11,7 +11,7 @@
 
 #pragma comment(lib, "Setupapi.lib")
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     namespace
     {

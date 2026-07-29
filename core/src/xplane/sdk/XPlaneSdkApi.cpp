@@ -1,4 +1,4 @@
-#include <phoenix/xplane/sdk/XPlaneSdkApi.h>
+#include <xpllink/xplane/sdk/XPlaneSdkApi.h>
 
 #include <XPLMUtilities.h>
 #include <XPLMDataAccess.h>
@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace phoenix::xplane::sdk
+namespace xpllink::xplane::sdk
 {
     namespace
     {
@@ -404,6 +404,6 @@ namespace phoenix::xplane::sdk
     void XPlaneSdkApi::resetRequested()
     {
         XPLMDebugString(
-            "Phoenix: device requested reset.\n");
+            "XPLLink: device requested reset.\n");
     }
 }

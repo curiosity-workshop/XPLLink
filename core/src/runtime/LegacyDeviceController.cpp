@@ -1,4 +1,4 @@
-#include <phoenix/runtime/LegacyDeviceController.h>
+#include <xpllink/runtime/LegacyDeviceController.h>
 
 #include <iomanip>
 #include <optional>
@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <variant>
 
-namespace phoenix::runtime
+namespace xpllink::runtime
 {
     namespace
     {
@@ -181,6 +181,11 @@ namespace phoenix::runtime
     bool LegacyDeviceController::registrationsRequested() const
     {
         return registrationsRequested_;
+    }
+
+    bool LegacyDeviceController::hasRegistrationFailures() const
+    {
+        return registrationFailures_;
     }
 
     bool LegacyDeviceController::dataFlowPaused() const
@@ -371,6 +376,7 @@ namespace phoenix::runtime
 
         if (!lookup.found)
         {
+            registrationFailures_ = true;
             session_.queueFrame(
                 protocol::legacy::dataRefResponseCommand,
                 failedLookupPayload(message.name));
@@ -407,6 +413,7 @@ namespace phoenix::runtime
 
         if (!lookup.found)
         {
+            registrationFailures_ = true;
             session_.queueFrame(
                 protocol::legacy::commandResponseCommand,
                 failedLookupPayload(message.name));
@@ -437,13 +444,25 @@ namespace phoenix::runtime
             return;
         }
 
+        const std::string xplaneValue =
+            message.type == protocol::legacy::DataRefValueType::String ?
+                message.value :
+                applyScaling(*binding, message.value);
+
+        if (observer_ != nullptr)
+        {
+            observer_->dataRefReceivedFromDevice(
+                binding->name,
+                message.value,
+                xplaneValue,
+                message.element);
+        }
+
         xplane_.writeDataRef({
             binding->name,
             binding->handle,
             toXPlaneType(message.type),
-            message.type == protocol::legacy::DataRefValueType::String ?
-                message.value :
-                applyScaling(*binding, message.value),
+            xplaneValue,
             message.element
         });
     }
@@ -557,6 +576,7 @@ namespace phoenix::runtime
         commands_.clear();
         updateSubscriptions_.clear();
         profilePreloaded_ = false;
+        registrationFailures_ = false;
     }
 
     LegacyDataRefBinding* LegacyDeviceController::findDataRef(

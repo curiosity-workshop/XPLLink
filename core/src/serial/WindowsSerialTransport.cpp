@@ -1,10 +1,10 @@
-#include <phoenix/serial/WindowsSerialTransport.h>
+#include <xpllink/serial/WindowsSerialTransport.h>
 #include <algorithm>
 #include <limits>
 #include <sstream>
 #include <utility>
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     namespace
     {

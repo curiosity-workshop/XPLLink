@@ -1,14 +1,14 @@
 #include <XPLLink.h>
 
-phoenix::XPLLink XP(Serial);
+xpllink::XPLLink link(Serial);
 
 void setup()
 {
     Serial.begin(115200);
-    XP.begin("XPLLink Basic Serial");
+    link.begin("XPLLink Basic Serial");
 }
 
 void loop()
 {
-    XP.xloop();
+    link.xloop();
 }

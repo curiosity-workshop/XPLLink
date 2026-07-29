@@ -1,6 +1,6 @@
 #include "LegacyProtocol.h"
 
-namespace phoenix::protocol
+namespace xpllink::protocol
 {
     void LegacyProtocol::reset()
     {

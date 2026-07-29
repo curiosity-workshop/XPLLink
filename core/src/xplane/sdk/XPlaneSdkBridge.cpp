@@ -1,9 +1,9 @@
-#include <phoenix/xplane/sdk/XPlaneSdkBridge.h>
+#include <xpllink/xplane/sdk/XPlaneSdkBridge.h>
 
 #include <algorithm>
 #include <utility>
 
-namespace phoenix::xplane::sdk
+namespace xpllink::xplane::sdk
 {
     namespace
     {

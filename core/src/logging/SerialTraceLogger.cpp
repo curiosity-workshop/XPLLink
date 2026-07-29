@@ -1,9 +1,9 @@
-#include <phoenix/logging/SerialTraceLogger.h>
+#include <xpllink/logging/SerialTraceLogger.h>
 
 #include <cctype>
 #include <iomanip>
 
-namespace phoenix::logging
+namespace xpllink::logging
 {
     SerialTraceLogger::SerialTraceLogger(
         const std::filesystem::path& path)
@@ -12,7 +12,7 @@ namespace phoenix::logging
         if (stream_.is_open())
         {
             stream_
-                << "Phoenix serial logger. Unprintable characters are "
+                << "XPLLink serial logger. Unprintable characters are "
                 << "represented by hex value (0xXX).\n"
                 << std::flush;
 

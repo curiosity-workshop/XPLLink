@@ -1,10 +1,10 @@
-#include <phoenix/serial/SerialDeviceClassifier.h>
+#include <xpllink/serial/SerialDeviceClassifier.h>
 
 #include <algorithm>
 #include <cctype>
 #include <string>
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     namespace
     {

@@ -1,8 +1,8 @@
-#include <phoenix/serial/LinuxSerialTransportFactory.h>
+#include <xpllink/serial/LinuxSerialTransportFactory.h>
 
 #include <string>
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     std::unique_ptr<transport::IByteTransport>
         LinuxSerialTransportFactory::create(

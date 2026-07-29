@@ -1,4 +1,4 @@
-#include <phoenix/runtime/LegacyDeviceController.h>
+#include <xpllink/runtime/LegacyDeviceController.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -12,7 +12,7 @@
 
 namespace
 {
-    class FakeTransport final : public phoenix::transport::IByteTransport
+    class FakeTransport final : public xpllink::transport::IByteTransport
     {
     public:
         bool open() override
@@ -104,10 +104,10 @@ namespace
         std::vector<std::byte> written_;
     };
 
-    class FakeXPlaneBridge final : public phoenix::xplane::IXPlaneBridge
+    class FakeXPlaneBridge final : public xpllink::xplane::IXPlaneBridge
     {
     public:
-        phoenix::xplane::DataRefLookupResult findDataRef(
+        xpllink::xplane::DataRefLookupResult findDataRef(
             std::string_view name) override
         {
             const auto found =
@@ -124,7 +124,7 @@ namespace
             };
         }
 
-        phoenix::xplane::CommandLookupResult findCommand(
+        xpllink::xplane::CommandLookupResult findCommand(
             std::string_view name) override
         {
             return {
@@ -136,13 +136,13 @@ namespace
         }
 
         void writeDataRef(
-            const phoenix::xplane::DataRefWrite& write) override
+            const xpllink::xplane::DataRefWrite& write) override
         {
             dataRefWrites.push_back(write);
         }
 
-        phoenix::xplane::DataRefReadResult readDataRef(
-            const phoenix::xplane::DataRefReadRequest&) override
+        xpllink::xplane::DataRefReadResult readDataRef(
+            const xpllink::xplane::DataRefReadRequest&) override
         {
             return {};
         }
@@ -201,7 +201,7 @@ namespace
 
         std::map<std::string, int> dataRefs;
         std::vector<std::string> commands;
-        std::vector<phoenix::xplane::DataRefWrite> dataRefWrites;
+        std::vector<xpllink::xplane::DataRefWrite> dataRefWrites;
         std::vector<std::pair<std::string, int>> touchedDataRefs;
         std::vector<std::string> commandEvents;
         std::vector<std::string> debugMessages;
@@ -210,7 +210,7 @@ namespace
     };
 
     class FakeLegacyDeviceObserver final
-        : public phoenix::runtime::ILegacyDeviceObserver
+        : public xpllink::runtime::ILegacyDeviceObserver
     {
     public:
         void microcontrollerRequestedDataRef(
@@ -228,7 +228,7 @@ namespace
         }
 
         void microcontrollerRequestedUpdates(
-            const phoenix::protocol::legacy::UpdatesRequest& request) override
+            const xpllink::protocol::legacy::UpdatesRequest& request) override
         {
             requests.push_back(
                 "updates:" +
@@ -238,7 +238,7 @@ namespace
         }
 
         void microcontrollerRequestedScaling(
-            const phoenix::protocol::legacy::ScalingRequest& request) override
+            const xpllink::protocol::legacy::ScalingRequest& request) override
         {
             requests.push_back(
                 "scaling:" +
@@ -247,6 +247,19 @@ namespace
                 std::to_string(request.fromHigh) + ":" +
                 std::to_string(request.toLow) + ":" +
                 std::to_string(request.toHigh));
+        }
+
+        void dataRefReceivedFromDevice(
+            std::string_view name,
+            std::string_view serialValue,
+            std::string_view xplaneValue,
+            std::optional<int> element) override
+        {
+            received.push_back(
+                std::string{ name } + ":" +
+                std::string{ serialValue } + ":" +
+                std::string{ xplaneValue } + ":" +
+                (element ? std::to_string(*element) : "none"));
         }
 
         void dataRefSentToDevice(
@@ -260,6 +273,7 @@ namespace
         }
 
         std::vector<std::string> requests;
+        std::vector<std::string> received;
     };
 
     bool expect(bool condition, std::string_view message)
@@ -276,12 +290,12 @@ namespace
 
 int main()
 {
-    using phoenix::runtime::LegacyDeviceController;
-    using phoenix::runtime::LegacyDeviceSession;
-    using phoenix::runtime::LegacyDeviceSessionOptions;
-    using phoenix::xplane::DataRefTypeData;
-    using phoenix::xplane::DataRefTypeFloat;
-    using phoenix::xplane::DataRefTypeInt;
+    using xpllink::runtime::LegacyDeviceController;
+    using xpllink::runtime::LegacyDeviceSession;
+    using xpllink::runtime::LegacyDeviceSessionOptions;
+    using xpllink::xplane::DataRefTypeData;
+    using xpllink::xplane::DataRefTypeFloat;
+    using xpllink::xplane::DataRefTypeInt;
 
     bool passed = true;
 
@@ -433,6 +447,10 @@ int main()
         xplane.dataRefWrites.size() >= 3 &&
         xplane.dataRefWrites.back().value == "0.5",
         "scaled dataref write should map raw values before X-Plane write");
+    passed &= expect(
+        !observer.received.empty() &&
+        observer.received.back() == "sim/test/int:512:0.5:none",
+        "scaled dataref telemetry should include serial and X-Plane values");
 
     transport.pushIncoming("[k,0,3]");
     tick = controller.tick();
@@ -472,6 +490,29 @@ int main()
     passed &= expect(
         controller.dataRefs().size() == 2,
         "missing dataref should not create a binding");
+    passed &= expect(
+        controller.hasRegistrationFailures(),
+        "missing dataref should mark the session non-cacheable");
+
+    const auto subscriptionsBeforeRejectedSequence =
+        controller.updateSubscriptions().size();
+    transport.pushIncoming(
+        "[r,2,250,0.8000]"
+        "[b,\"sim/missing/next\"]");
+    tick = controller.tick();
+
+    passed &= expect(
+        tick.messagesProcessed == 2,
+        "interleaved rejected dataref sequence should process");
+    passed &= expect(
+        transport.writtenText().ends_with(
+            "[D,-1,\"sim/missing/next\"]"),
+        "interleaved rejected dataref response failed");
+    passed &= expect(
+        controller.dataRefs().size() == 2 &&
+        controller.updateSubscriptions().size() ==
+            subscriptionsBeforeRejectedSequence,
+        "rejected handle should not create a binding or subscription");
 
     transport.pushIncoming("[m,\"sim/missing/command\"]");
     tick = controller.tick();
@@ -504,7 +545,7 @@ int main()
             profileXPlane
         };
 
-        phoenix::profile::DeviceProfile profile;
+        xpllink::profile::DeviceProfile profile;
         profile.dataRefs.push_back({
             0,
             "sim/profile/dataref",

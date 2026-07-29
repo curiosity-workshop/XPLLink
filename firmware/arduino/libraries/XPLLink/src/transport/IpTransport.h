@@ -1,10 +1,10 @@
 #pragma once
 
-#include "PhoenixTransport.h"
+#include "XPLLinkTransport.h"
 
-namespace phoenix::transport
+namespace xpllink::transport
 {
-    class IpTransport : public PhoenixTransport
+    class IpTransport : public XPLLinkTransport
     {
     public:
         // Placeholder for future WiFi/Ethernet-backed transport support.

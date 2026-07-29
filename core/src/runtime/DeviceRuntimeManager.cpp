@@ -1,15 +1,16 @@
-#include <phoenix/runtime/DeviceRuntimeManager.h>
+#include <xpllink/runtime/DeviceRuntimeManager.h>
 
-#include <phoenix/logging/Log.h>
-#include <phoenix/profile/JsonDeviceProfileStore.h>
-#include <phoenix/protocol/legacy/LegacyFrame.h>
-#include <phoenix/runtime/LegacyDeviceSession.h>
+#include <xpllink/logging/Log.h>
+#include <xpllink/profile/JsonDeviceProfileStore.h>
+#include <xpllink/protocol/legacy/LegacyFrame.h>
+#include <xpllink/runtime/LegacyDeviceSession.h>
 
+#include <filesystem>
 #include <sstream>
 #include <thread>
 #include <utility>
 
-namespace phoenix::runtime
+namespace xpllink::runtime
 {
     struct DeviceRuntimeManager::DeviceContext
     {
@@ -157,6 +158,7 @@ namespace phoenix::runtime
             const DeviceRuntimeManager::DeviceContext& device)
         {
             profile::DeviceProfile profile;
+            profile.cacheSchemaVersion = 1;
             profile.deviceName = device.deviceName;
             profile.deviceVersion = device.deviceVersion;
 
@@ -253,6 +255,19 @@ namespace phoenix::runtime
                 return false;
             }
 
+            if (loadedProfile->cacheSchemaVersion != 1)
+            {
+                std::ostringstream message;
+
+                message
+                    << "  Stored profile uses an older cache schema for "
+                    << device.portName
+                    << "; using live registration.\n";
+
+                logging::warning(message.str());
+                return false;
+            }
+
             if (!device.controller->tryLoadProfile(*loadedProfile))
             {
                 std::ostringstream message;
@@ -299,6 +314,20 @@ namespace phoenix::runtime
                 store.profilePathFor(profile);
 
             std::ostringstream message;
+
+            if (device.controller->hasRegistrationFailures())
+            {
+                std::error_code error;
+                std::filesystem::remove(path, error);
+
+                message
+                    << "  Profile caching disabled for "
+                    << device.portName
+                    << " because one or more requested bindings were unavailable.\n";
+
+                logging::warning(message.str());
+                return;
+            }
 
             if (store.save(profile))
             {

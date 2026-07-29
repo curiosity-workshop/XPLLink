@@ -1,4 +1,4 @@
-#include <phoenix/protocol/legacy/LegacyFrameParser.h>
+#include <xpllink/protocol/legacy/LegacyFrameParser.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -6,7 +6,7 @@
 #include <string_view>
 #include <utility>
 
-namespace phoenix::protocol::legacy
+namespace xpllink::protocol::legacy
 {
     namespace
     {

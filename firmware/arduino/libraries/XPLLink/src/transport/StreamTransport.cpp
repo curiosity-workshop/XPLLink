@@ -1,6 +1,6 @@
 #include "StreamTransport.h"
 
-namespace phoenix::transport
+namespace xpllink::transport
 {
     StreamTransport::StreamTransport(Stream& stream)
         : stream_(stream)

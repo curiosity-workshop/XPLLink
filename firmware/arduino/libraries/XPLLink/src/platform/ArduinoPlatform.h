@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-namespace phoenix::platform
+namespace xpllink::platform
 {
     inline unsigned long milliseconds()
     {

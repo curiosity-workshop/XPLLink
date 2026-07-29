@@ -1,6 +1,6 @@
-#include <phoenix/runtime/LegacyUpdateScheduler.h>
+#include <xpllink/runtime/LegacyUpdateScheduler.h>
 
-#include <phoenix/protocol/legacy/LegacyFrame.h>
+#include <xpllink/protocol/legacy/LegacyFrame.h>
 
 #include <cmath>
 #include <cstddef>
@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace phoenix::runtime
+namespace xpllink::runtime
 {
     namespace
     {

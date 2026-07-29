@@ -1,10 +1,10 @@
 #pragma once
 
-#include "PhoenixTransport.h"
+#include "XPLLinkTransport.h"
 
-namespace phoenix::transport
+namespace xpllink::transport
 {
-    class StreamTransport final : public PhoenixTransport
+    class StreamTransport final : public XPLLinkTransport
     {
     public:
         explicit StreamTransport(Stream& stream);

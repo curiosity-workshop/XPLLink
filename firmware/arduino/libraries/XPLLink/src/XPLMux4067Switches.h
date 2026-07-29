@@ -1,6 +1,6 @@
-//   XPLMux4067Switches.h - Library for 4067 multiplexer 
+//   XPLMux4067Switches.h - Library for 4067 multiplexer
 //   Created by Curiosity Workshop, Michael Gerlicher,  2024
-//   
+//
 //   To report problems, download updates and examples, suggest enhancements or get technical support, please visit:
 //      discord:  https://discord.gg/gzXetjEST4
 //      patreon:  www.patreon.com/curiosityworkshop
@@ -19,12 +19,12 @@
 #define XPLMUX4067_RELEASED     1
 
 #define XPLMUX4067_SENDTOHANDLER   0                   // Default is to send switch events to the supplied handler.  This always occurs regardless.
-#define XPLMUX4067_DATAREFWRITE    1                   // Update dataref with switch status 
+#define XPLMUX4067_DATAREFWRITE    1                   // Update dataref with switch status
 #define XPLMUX4067_COMMANDTRIGGER  2                   // Trigger command with pressed
 #define XPLMUX4067_COMMANDSTARTEND 3                   // Start command when pressed, end command when released
 #define XPLMUX4067_DATAREFWRITE_INVERT 4               // same as datarefwrite but invert the signal
 
-/// @brief Core class for the XPLPro Arduino library
+/// @brief Core class for the XPLLink Arduino library
 class XPLMux4067Switches
 {
 public:
@@ -37,32 +37,32 @@ public:
     /// @param muxHandler, function called when pin activity is detected, or NULL
     XPLMux4067Switches(uint8_t inPinSig, uint8_t inPinS0, uint8_t inPinS1, uint8_t inPinS2, uint8_t inPinS3, void (*muxHandler)(uint8_t muxChannel, uint8_t muxValue));
 
-    void begin(XPLLink* xplpro);
+    void begin(XPLLink* link);
 
     int8_t addPin(uint8_t inPin, uint8_t inMode, unsigned int inHandle);
 
     int8_t getHandle(uint8_t inPin);
 
-  
+
     /// @brief Scan mux pins and call handler if any changes are detected.  Run regularly
-    void check(void);  
+    void check(void);
 
     void clear(void);
-    
+
 private:
 
-  XPLLink* _XP;          
+  XPLLink* link_;
   unsigned int _maxSwitches;
   unsigned int _switchCount;
 
   void (*_muxHandler)(uint8_t muxChannel, uint8_t muxValue) = NULL;  // this function will be called when activity is detected on the mux
-   
+
   uint8_t _pinS0;
   uint8_t _pinS1;
   uint8_t _pinS2;
   uint8_t _pinS3;
   uint8_t _pinSig;
-   
+
   struct XPLSwitch
   {
       uint8_t muxPin;                     // connected pin
@@ -81,7 +81,7 @@ private:
 XPLMux4067Switches::XPLMux4067Switches(uint8_t inPinSig, uint8_t inPinS0, uint8_t inPinS1, uint8_t inPinS2, uint8_t inPinS3, void (*muxHandler)(uint8_t inChannel, uint8_t inValue))
 {
 
-  _pinSig = inPinSig;         pinMode(_pinSig, INPUT_PULLUP); 
+  _pinSig = inPinSig;         pinMode(_pinSig, INPUT_PULLUP);
   _pinS0 = inPinS0;           pinMode(_pinS0, OUTPUT);            digitalWrite(_pinS0, LOW);
   _pinS1 = inPinS1;           pinMode(_pinS1, OUTPUT);            digitalWrite(_pinS1, LOW);
   _pinS2 = inPinS2;           pinMode(_pinS2, OUTPUT);            digitalWrite(_pinS2, LOW);
@@ -92,12 +92,12 @@ XPLMux4067Switches::XPLMux4067Switches(uint8_t inPinSig, uint8_t inPinS0, uint8_
  // if (_maxSwitches > 16) _maxSwitches = 16;                 // max for 4067 mux
   _maxSwitches = 16;                // my intention is to make this dynamic but it is problematic
  //switches = new struct XPLSwitch[ _maxSwitches];
- 
+
 };
 
-void XPLMux4067Switches::begin(XPLLink* xplpro)
+void XPLMux4067Switches::begin(XPLLink* link)
 {
-    _XP = xplpro;
+    link_ = link;
     clear();
 
 }
@@ -116,7 +116,7 @@ int8_t XPLMux4067Switches::addPin(uint8_t inPin, uint8_t inMode, unsigned int in
     _switches[_switchCount].mode = inMode;
     _switches[_switchCount].handle = inHandle;
     _switches[_switchCount].prevStatus = -1;                // this will force it to update to the plugin.
-  
+
     return _switchCount++;
 
 }
@@ -131,17 +131,17 @@ int8_t XPLMux4067Switches::getHandle(uint8_t inPin)
 
 void XPLMux4067Switches::check(void)
 {
- 
+
   unsigned long timeNow = millis();
   for (uint8_t i = 0; i < _switchCount; i++)
-  { 
-       
+  {
+
     const byte ch = _switches[i].muxPin;
     digitalWrite(_pinS0, ch & 0x01);
     digitalWrite(_pinS1, ch & 0x02);
     digitalWrite(_pinS2, ch & 0x04);
     digitalWrite(_pinS3, ch & 0x08);
-    
+
     uint8_t pinValue = digitalRead(_pinSig);
 
     if (pinValue != _switches[i].prevStatus && timeNow - _switches[i].prevTime >= XPLMUX4067_DEBOUNCETIME)
@@ -153,20 +153,20 @@ void XPLMux4067Switches::check(void)
       {
 
       case XPLMUX4067_DATAREFWRITE:
-          _XP->datarefWrite(_switches[i].handle, pinValue);
+          link_->datarefWrite(_switches[i].handle, pinValue);
           break;
 
       case XPLMUX4067_DATAREFWRITE_INVERT:
-          _XP->datarefWrite(_switches[i].handle, !pinValue);
+          link_->datarefWrite(_switches[i].handle, !pinValue);
           break;
 
       case XPLMUX4067_COMMANDTRIGGER:
-          if (pinValue == XPLMUX4067_PRESSED) _XP->commandTrigger(_switches[i].handle);
+          if (pinValue == XPLMUX4067_PRESSED) link_->commandTrigger(_switches[i].handle);
           break;
 
       case XPLMUX4067_COMMANDSTARTEND:
-          if (pinValue == XPLMUX4067_PRESSED)     _XP->commandStart(_switches[i].handle);
-          if (pinValue == XPLMUX4067_RELEASED)    _XP->commandEnd(_switches[i].handle);
+          if (pinValue == XPLMUX4067_PRESSED)     link_->commandStart(_switches[i].handle);
+          if (pinValue == XPLMUX4067_RELEASED)    link_->commandEnd(_switches[i].handle);
           break;
 
 
@@ -177,7 +177,7 @@ void XPLMux4067Switches::check(void)
     }
 
   }
- 
+
 }
 
 #endif

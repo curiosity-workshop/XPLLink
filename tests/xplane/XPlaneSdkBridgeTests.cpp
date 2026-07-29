@@ -1,4 +1,4 @@
-#include <phoenix/xplane/sdk/XPlaneSdkBridge.h>
+#include <xpllink/xplane/sdk/XPlaneSdkBridge.h>
 
 #include <iostream>
 #include <map>
@@ -9,10 +9,10 @@
 namespace
 {
     class FakeXPlaneSdkApi final
-        : public phoenix::xplane::sdk::IXPlaneSdkApi
+        : public xpllink::xplane::sdk::IXPlaneSdkApi
     {
     public:
-        phoenix::xplane::sdk::NativeDataRefLookup findDataRef(
+        xpllink::xplane::sdk::NativeDataRefLookup findDataRef(
             std::string_view name) override
         {
             const auto found =
@@ -29,7 +29,7 @@ namespace
             };
         }
 
-        phoenix::xplane::sdk::NativeCommandLookup findCommand(
+        xpllink::xplane::sdk::NativeCommandLookup findCommand(
             std::string_view name) override
         {
             const auto found =
@@ -44,27 +44,27 @@ namespace
         }
 
         void writeDataRef(
-            phoenix::xplane::sdk::NativeDataRefHandle,
-            const phoenix::xplane::DataRefWrite& write) override
+            xpllink::xplane::sdk::NativeDataRefHandle,
+            const xpllink::xplane::DataRefWrite& write) override
         {
             writes.push_back(write.value);
             writeTypes.push_back(write.valueType);
         }
 
-        phoenix::xplane::DataRefReadResult readDataRef(
-            phoenix::xplane::sdk::NativeDataRefHandle,
-            const phoenix::xplane::DataRefReadRequest&) override
+        xpllink::xplane::DataRefReadResult readDataRef(
+            xpllink::xplane::sdk::NativeDataRefHandle,
+            const xpllink::xplane::DataRefReadRequest&) override
         {
             return {
                 true,
-                phoenix::xplane::DataRefTypeInt,
+                xpllink::xplane::DataRefTypeInt,
                 "1",
                 std::nullopt
             };
         }
 
         void touchDataRef(
-            phoenix::xplane::sdk::NativeDataRefHandle,
+            xpllink::xplane::sdk::NativeDataRefHandle,
             std::string_view,
             int) override
         {
@@ -72,21 +72,21 @@ namespace
         }
 
         void commandBegin(
-            phoenix::xplane::sdk::NativeCommandHandle handle) override
+            xpllink::xplane::sdk::NativeCommandHandle handle) override
         {
             commandEvents.push_back(
                 "begin:" + handleName(handle));
         }
 
         void commandEnd(
-            phoenix::xplane::sdk::NativeCommandHandle handle) override
+            xpllink::xplane::sdk::NativeCommandHandle handle) override
         {
             commandEvents.push_back(
                 "end:" + handleName(handle));
         }
 
         void commandOnce(
-            phoenix::xplane::sdk::NativeCommandHandle handle) override
+            xpllink::xplane::sdk::NativeCommandHandle handle) override
         {
             commandEvents.push_back(
                 "once:" + handleName(handle));
@@ -108,15 +108,15 @@ namespace
         }
 
         static std::string handleName(
-            phoenix::xplane::sdk::NativeCommandHandle handle)
+            xpllink::xplane::sdk::NativeCommandHandle handle)
         {
             return std::to_string(
                 reinterpret_cast<std::uintptr_t>(handle));
         }
 
-        std::map<std::string, phoenix::xplane::sdk::NativeDataRefHandle> dataRefs;
+        std::map<std::string, xpllink::xplane::sdk::NativeDataRefHandle> dataRefs;
         std::map<std::string, int> dataRefTypes;
-        std::map<std::string, phoenix::xplane::sdk::NativeCommandHandle> commands;
+        std::map<std::string, xpllink::xplane::sdk::NativeCommandHandle> commands;
         std::vector<std::string> writes;
         std::vector<int> writeTypes;
         std::vector<std::string> commandEvents;
@@ -127,11 +127,11 @@ namespace
     };
 
     class FakeTelemetry final
-        : public phoenix::xplane::sdk::IXPlaneSdkInteractionTelemetry
+        : public xpllink::xplane::sdk::IXPlaneSdkInteractionTelemetry
     {
     public:
         void dataRefReceived(
-            const phoenix::xplane::DataRefWrite& write) override
+            const xpllink::xplane::DataRefWrite& write) override
         {
             lastDataRefReceived =
                 write.name + "=" + write.value + ":" +
@@ -139,8 +139,8 @@ namespace
         }
 
         void dataRefSent(
-            const phoenix::xplane::DataRefReadRequest& request,
-            const phoenix::xplane::DataRefReadResult& result) override
+            const xpllink::xplane::DataRefReadRequest& request,
+            const xpllink::xplane::DataRefReadResult& result) override
         {
             lastDataRefSent =
                 request.name + "=" + result.value;
@@ -188,8 +188,8 @@ namespace
 
 int main()
 {
-    using phoenix::xplane::DataRefTypeInt;
-    using phoenix::xplane::sdk::XPlaneSdkBridge;
+    using xpllink::xplane::DataRefTypeInt;
+    using xpllink::xplane::sdk::XPlaneSdkBridge;
 
     bool passed = true;
 
@@ -198,7 +198,7 @@ int main()
     FakeXPlaneSdkApi api;
     api.dataRefs["sim/test/dataref"] = &nativeDataRef;
     api.dataRefTypes["sim/test/dataref"] =
-        phoenix::xplane::DataRefTypeInt;
+        xpllink::xplane::DataRefTypeInt;
     api.commands["sim/test/command"] = &nativeCommand;
     FakeTelemetry telemetry;
 
@@ -290,21 +290,21 @@ int main()
         FakeXPlaneSdkApi writeApi;
         writeApi.dataRefs["sim/test/float"] = &floatDataRef;
         writeApi.dataRefTypes["sim/test/float"] =
-            phoenix::xplane::DataRefTypeFloat;
+            xpllink::xplane::DataRefTypeFloat;
 
         XPlaneSdkBridge writeBridge{ writeApi };
         writeBridge.findDataRef("sim/test/float");
         writeBridge.writeDataRef({
             "sim/test/float",
             0,
-            phoenix::xplane::DataRefTypeInt,
+            xpllink::xplane::DataRefTypeInt,
             "7",
             std::nullopt
         });
 
         passed &= expect(
             writeApi.writeTypes.size() == 1 &&
-            writeApi.writeTypes[0] == phoenix::xplane::DataRefTypeFloat,
+            writeApi.writeTypes[0] == xpllink::xplane::DataRefTypeFloat,
             "bridge should coerce dataref writes to an X-Plane-compatible type");
     }
 
@@ -339,7 +339,7 @@ int main()
         factoryApi.commands["sim/test/first"] = &firstCommand;
         factoryApi.commands["sim/test/second"] = &secondCommand;
 
-        phoenix::xplane::sdk::XPlaneSdkBridgeFactory factory{
+        xpllink::xplane::sdk::XPlaneSdkBridgeFactory factory{
             factoryApi
         };
 

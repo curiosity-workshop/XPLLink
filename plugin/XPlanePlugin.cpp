@@ -1,17 +1,17 @@
-#include "PhoenixStatusWindow.h"
+#include "XPLLinkStatusWindow.h"
 
-#include <phoenix/discovery/DiscoveredDevice.h>
-#include <phoenix/logging/SerialTraceLogger.h>
-#include <phoenix/protocol/legacy/LegacyFrame.h>
-#include <phoenix/protocol/legacy/LegacyFrameParser.h>
-#include <phoenix/runtime/DeviceRuntimeManager.h>
-#include <phoenix/serial/NativeSerial.h>
-#include <phoenix/serial/SerialDeviceClassifier.h>
-#include <phoenix/serial/SerialDeviceKind.h>
-#include <phoenix/serial/SerialPortInfo.h>
-#include <phoenix/transport/IByteTransport.h>
-#include <phoenix/xplane/sdk/XPlaneSdkApi.h>
-#include <phoenix/xplane/sdk/XPlaneSdkBridge.h>
+#include <xpllink/discovery/DiscoveredDevice.h>
+#include <xpllink/logging/SerialTraceLogger.h>
+#include <xpllink/protocol/legacy/LegacyFrame.h>
+#include <xpllink/protocol/legacy/LegacyFrameParser.h>
+#include <xpllink/runtime/DeviceRuntimeManager.h>
+#include <xpllink/serial/NativeSerial.h>
+#include <xpllink/serial/SerialDeviceClassifier.h>
+#include <xpllink/serial/SerialDeviceKind.h>
+#include <xpllink/serial/SerialPortInfo.h>
+#include <xpllink/transport/IByteTransport.h>
+#include <xpllink/xplane/sdk/XPlaneSdkApi.h>
+#include <xpllink/xplane/sdk/XPlaneSdkBridge.h>
 
 #include <XPLMMenus.h>
 #include <XPLMPlugin.h>
@@ -36,7 +36,7 @@
 
 namespace
 {
-    enum class PhoenixMenuAction : std::intptr_t
+    enum class XPLLinkMenuAction : std::intptr_t
     {
         ToggleStatusWindow = 1,
         EngageDevices = 2,
@@ -76,7 +76,7 @@ namespace
             error);
     }
 
-    std::filesystem::path preparedPhoenixOutputDirectory()
+    std::filesystem::path preparedXPLLinkOutputDirectory()
     {
         auto path =
             pluginOutputDirectory();
@@ -86,9 +86,9 @@ namespace
     }
 
     std::string deviceKindName(
-        phoenix::serial::SerialDeviceKind kind)
+        xpllink::serial::SerialDeviceKind kind)
     {
-        using phoenix::serial::SerialDeviceKind;
+        using xpllink::serial::SerialDeviceKind;
 
         switch (kind)
         {
@@ -115,9 +115,9 @@ namespace
     }
 
     std::string controlModeName(
-        phoenix::serial::NativeSerialControlMode mode)
+        xpllink::serial::NativeSerialControlMode mode)
     {
-        using phoenix::serial::NativeSerialControlMode;
+        using xpllink::serial::NativeSerialControlMode;
 
         switch (mode)
         {
@@ -132,13 +132,13 @@ namespace
     }
 
     void logSerialPortInformation(
-        const phoenix::serial::SerialPortInfo& port,
-        phoenix::serial::SerialDeviceKind kind,
+        const xpllink::serial::SerialPortInfo& port,
+        xpllink::serial::SerialDeviceKind kind,
         std::string_view action)
     {
         std::ostringstream message;
         message
-            << "Phoenix: serial port "
+            << "XPLLink: serial port "
             << port.portName
             << " "
             << action
@@ -160,13 +160,13 @@ namespace
     }
 
     void logProbeEvent(
-        const phoenix::serial::SerialPortInfo& port,
-        phoenix::serial::NativeSerialControlMode mode,
+        const xpllink::serial::SerialPortInfo& port,
+        xpllink::serial::NativeSerialControlMode mode,
         std::string_view event)
     {
         std::ostringstream message;
         message
-            << "Phoenix: probe "
+            << "XPLLink: probe "
             << event
             << " on "
             << port.portName
@@ -180,11 +180,11 @@ namespace
     }
 
     std::string transportDiagnostic(
-        const phoenix::transport::IByteTransport* transport)
+        const xpllink::transport::IByteTransport* transport)
     {
 #if defined(_WIN32)
         const auto* windowsTransport =
-            dynamic_cast<const phoenix::serial::WindowsSerialTransport*>(
+            dynamic_cast<const xpllink::serial::WindowsSerialTransport*>(
                 transport);
 
         if (windowsTransport != nullptr &&
@@ -226,7 +226,7 @@ namespace
     }
 
     class PluginLegacyDeviceObserver final
-        : public phoenix::runtime::ILegacyDeviceObserver
+        : public xpllink::runtime::ILegacyDeviceObserver
     {
     public:
         explicit PluginLegacyDeviceObserver(
@@ -234,8 +234,14 @@ namespace
             std::function<void(
                 std::string_view,
                 std::string_view,
+                std::string_view,
+                std::optional<int>)> dataRefReceivedCallback,
+            std::function<void(
+                std::string_view,
+                std::string_view,
                 std::optional<int>)> dataRefSentCallback)
             : portName_(std::move(portName))
+            , dataRefReceivedCallback_(std::move(dataRefReceivedCallback))
             , dataRefSentCallback_(std::move(dataRefSentCallback))
         {
         }
@@ -257,13 +263,29 @@ namespace
         }
 
         void microcontrollerRequestedUpdates(
-            const phoenix::protocol::legacy::UpdatesRequest&) override
+            const xpllink::protocol::legacy::UpdatesRequest&) override
         {
         }
 
         void microcontrollerRequestedScaling(
-            const phoenix::protocol::legacy::ScalingRequest&) override
+            const xpllink::protocol::legacy::ScalingRequest&) override
         {
+        }
+
+        void dataRefReceivedFromDevice(
+            std::string_view name,
+            std::string_view serialValue,
+            std::string_view xplaneValue,
+            std::optional<int> element) override
+        {
+            if (dataRefReceivedCallback_)
+            {
+                dataRefReceivedCallback_(
+                    name,
+                    serialValue,
+                    xplaneValue,
+                    element);
+            }
         }
 
         void dataRefSentToDevice(
@@ -287,7 +309,7 @@ namespace
         {
             std::ostringstream message;
             message
-                << "Phoenix: "
+                << "XPLLink: "
                 << portName_
                 << " requested "
                 << type
@@ -302,23 +324,34 @@ namespace
         std::function<void(
             std::string_view,
             std::string_view,
+            std::string_view,
+            std::optional<int>)> dataRefReceivedCallback_;
+        std::function<void(
+            std::string_view,
+            std::string_view,
             std::optional<int>)> dataRefSentCallback_;
     };
 
     class PluginLegacyDeviceObserverFactory final
-        : public phoenix::runtime::ILegacyDeviceObserverFactory
+        : public xpllink::runtime::ILegacyDeviceObserverFactory
     {
     public:
         explicit PluginLegacyDeviceObserverFactory(
             std::function<void(
                 std::string_view,
                 std::string_view,
+                std::string_view,
+                std::optional<int>)> dataRefReceivedCallback,
+            std::function<void(
+                std::string_view,
+                std::string_view,
                 std::optional<int>)> dataRefSentCallback)
-            : dataRefSentCallback_(std::move(dataRefSentCallback))
+            : dataRefReceivedCallback_(std::move(dataRefReceivedCallback))
+            , dataRefSentCallback_(std::move(dataRefSentCallback))
         {
         }
 
-        std::unique_ptr<phoenix::runtime::ILegacyDeviceObserver>
+        std::unique_ptr<xpllink::runtime::ILegacyDeviceObserver>
             createObserver(
                 std::string_view portName,
                 std::string_view,
@@ -326,6 +359,7 @@ namespace
         {
             return std::make_unique<PluginLegacyDeviceObserver>(
                 std::string{ portName },
+                dataRefReceivedCallback_,
                 dataRefSentCallback_);
         }
 
@@ -333,11 +367,16 @@ namespace
         std::function<void(
             std::string_view,
             std::string_view,
+            std::string_view,
+            std::optional<int>)> dataRefReceivedCallback_;
+        std::function<void(
+            std::string_view,
+            std::string_view,
             std::optional<int>)> dataRefSentCallback_;
     };
 
     class ToggleableSerialTraceSink final
-        : public phoenix::logging::ISerialTraceSink
+        : public xpllink::logging::ISerialTraceSink
     {
     public:
         explicit ToggleableSerialTraceSink(
@@ -364,7 +403,7 @@ namespace
         }
 
         void bytes(
-            phoenix::logging::ByteDumpDirection direction,
+            xpllink::logging::ByteDumpDirection direction,
             std::string_view portName,
             std::span<const std::byte> data) override
         {
@@ -380,37 +419,22 @@ namespace
         }
 
     private:
-        phoenix::logging::SerialTraceLogger logger_;
+        xpllink::logging::SerialTraceLogger logger_;
         bool enabled_ = false;
     };
 
     class PluginInteractionTelemetry final
-        : public phoenix::xplane::sdk::IXPlaneSdkInteractionTelemetry
+        : public xpllink::xplane::sdk::IXPlaneSdkInteractionTelemetry
     {
     public:
         void dataRefReceived(
-            const phoenix::xplane::DataRefWrite& write) override
+            const xpllink::xplane::DataRefWrite&) override
         {
-            std::ostringstream message;
-            message
-                << write.name
-                << " = "
-                << write.value;
-
-            if (write.element)
-            {
-                message
-                    << " element "
-                    << *write.element;
-            }
-
-            lastDataRefReceived_ =
-                message.str();
         }
 
         void dataRefSent(
-            const phoenix::xplane::DataRefReadRequest& request,
-            const phoenix::xplane::DataRefReadResult& result) override
+            const xpllink::xplane::DataRefReadRequest& request,
+            const xpllink::xplane::DataRefReadResult& result) override
         {
         }
 
@@ -433,6 +457,31 @@ namespace
             }
 
             lastDataRefSent_ =
+                message.str();
+        }
+
+        void dataRefReceivedFromDevice(
+            std::string_view name,
+            std::string_view serialValue,
+            std::string_view xplaneValue,
+            std::optional<int> element)
+        {
+            std::ostringstream message;
+            message
+                << name
+                << ": serial "
+                << serialValue
+                << " -> X-Plane "
+                << xplaneValue;
+
+            if (element)
+            {
+                message
+                    << " element "
+                    << *element;
+            }
+
+            lastDataRefReceived_ =
                 message.str();
         }
 
@@ -475,7 +524,7 @@ namespace
                 message.str();
         }
 
-        phoenix::xplane::sdk::XPlaneSdkInteractionTelemetrySnapshot
+        xpllink::xplane::sdk::XPlaneSdkInteractionTelemetrySnapshot
             snapshot() const
         {
             return {
@@ -495,22 +544,22 @@ namespace
 
     struct IncrementalProbe
     {
-        phoenix::serial::SerialPortInfo port;
-        std::unique_ptr<phoenix::transport::IByteTransport> transport;
-        phoenix::protocol::legacy::LegacyFrameParser parser;
-        phoenix::discovery::DiscoveredDevice device;
-        phoenix::serial::NativeSerialControlMode controlMode =
-            phoenix::serial::NativeSerialControlMode::DtrRtsDisabled;
+        xpllink::serial::SerialPortInfo port;
+        std::unique_ptr<xpllink::transport::IByteTransport> transport;
+        xpllink::protocol::legacy::LegacyFrameParser parser;
+        xpllink::discovery::DiscoveredDevice device;
+        xpllink::serial::NativeSerialControlMode controlMode =
+            xpllink::serial::NativeSerialControlMode::DtrRtsDisabled;
         std::chrono::steady_clock::time_point deadline{};
         std::chrono::steady_clock::time_point nextRequestAt{};
         bool requestsStarted = false;
     };
 
-    class PhoenixPluginRuntime
+    class XPLLinkPluginRuntime
     {
     public:
-        PhoenixPluginRuntime()
-            : outputDirectory_(preparedPhoenixOutputDirectory())
+        XPLLinkPluginRuntime()
+            : outputDirectory_(preparedXPLLinkOutputDirectory())
             , profileDirectory_(outputDirectory_ / "profiles")
             , serialTracePath_(outputDirectory_ / "XPLLinkSerial.log")
             , settingsPath_(outputDirectory_ / "XPLLinkSettings.txt")
@@ -518,9 +567,9 @@ namespace
             , deviceRuntime_(
                 serialTrace_,
                 bridgeFactory_,
-                phoenix::runtime::DeviceRuntimeManagerOptions{
+                xpllink::runtime::DeviceRuntimeManagerOptions{
                     .profileDirectory = profileDirectory_,
-                    .updateScheduler = phoenix::runtime::LegacyUpdateSchedulerOptions{
+                    .updateScheduler = xpllink::runtime::LegacyUpdateSchedulerOptions{
                         .maxFramesPerTick = 8,
                         .maxBytesPerTick = 64
                     },
@@ -538,7 +587,7 @@ namespace
             createMenu();
         }
 
-        ~PhoenixPluginRuntime()
+        ~XPLLinkPluginRuntime()
         {
             activeProbe_.reset();
             deviceRuntime_.disengageDevices();
@@ -558,27 +607,27 @@ namespace
         }
 
         void handleMenuAction(
-            PhoenixMenuAction action)
+            XPLLinkMenuAction action)
         {
             switch (action)
             {
-            case PhoenixMenuAction::EngageDevices:
+            case XPLLinkMenuAction::EngageDevices:
                 engageDevices();
                 break;
 
-            case PhoenixMenuAction::DisengageDevices:
+            case XPLLinkMenuAction::DisengageDevices:
                 disengageDevices();
                 break;
 
-            case PhoenixMenuAction::ToggleSerialTrace:
+            case XPLLinkMenuAction::ToggleSerialTrace:
                 toggleSerialTrace();
                 break;
 
-            case PhoenixMenuAction::ClearProfileCache:
+            case XPLLinkMenuAction::ClearProfileCache:
                 clearProfileCache();
                 break;
 
-            case PhoenixMenuAction::ToggleStatusWindow:
+            case XPLLinkMenuAction::ToggleStatusWindow:
                 toggleStatusWindow();
                 break;
             }
@@ -617,11 +666,11 @@ namespace
                 return;
             }
 
-            if (message == XPLM_MSG_LIVERY_LOADED &&
+            if (message == XPLM_MSG_PLANE_LOADED &&
                 aircraftIndex == 0)
             {
                 requestAutoEngage(
-                    "user aircraft livery loaded");
+                    "user aircraft loaded");
             }
         }
 
@@ -640,7 +689,7 @@ namespace
             void* itemRef)
         {
             auto* runtime =
-                static_cast<PhoenixPluginRuntime*>(menuRef);
+                static_cast<XPLLinkPluginRuntime*>(menuRef);
 
             if (runtime == nullptr)
             {
@@ -648,12 +697,12 @@ namespace
             }
 
             runtime->handleMenuAction(
-                static_cast<PhoenixMenuAction>(
+                static_cast<XPLLinkMenuAction>(
                     reinterpret_cast<std::intptr_t>(itemRef)));
         }
 
         static void* menuItemRef(
-            PhoenixMenuAction action)
+            XPLLinkMenuAction action)
         {
             return reinterpret_cast<void*>(
                 static_cast<std::intptr_t>(action));
@@ -703,24 +752,24 @@ namespace
             XPLMAppendMenuItem(
                 menu_,
                 "Status Window",
-                menuItemRef(PhoenixMenuAction::ToggleStatusWindow),
+                menuItemRef(XPLLinkMenuAction::ToggleStatusWindow),
                 0);
             XPLMAppendMenuItem(
                 menu_,
                 "Engage Devices",
-                menuItemRef(PhoenixMenuAction::EngageDevices),
+                menuItemRef(XPLLinkMenuAction::EngageDevices),
                 0);
             XPLMAppendMenuItem(
                 menu_,
                 "Disengage Devices",
-                menuItemRef(PhoenixMenuAction::DisengageDevices),
+                menuItemRef(XPLLinkMenuAction::DisengageDevices),
                 0);
             XPLMAppendMenuSeparator(menu_);
             serialTraceItemIndex_ =
                 XPLMAppendMenuItem(
                     menu_,
                     "Serial Trace Logging",
-                    menuItemRef(PhoenixMenuAction::ToggleSerialTrace),
+                    menuItemRef(XPLLinkMenuAction::ToggleSerialTrace),
                     0);
             XPLMCheckMenuItem(
                 menu_,
@@ -732,7 +781,7 @@ namespace
             XPLMAppendMenuItem(
                 menu_,
                 "Clear Device Profile Cache",
-                menuItemRef(PhoenixMenuAction::ClearProfileCache),
+                menuItemRef(XPLLinkMenuAction::ClearProfileCache),
                 0);
 
             debugLog(
@@ -826,12 +875,12 @@ namespace
                 interactionTelemetry_.snapshot();
 
             lines.push_back(
-                "Last Dataref Received: " +
+                "Last Device -> X-Plane: " +
                 (telemetry.lastDataRefReceived.empty() ?
                     std::string{ "none" } :
                     telemetry.lastDataRefReceived));
             lines.push_back(
-                "Last Dataref Sent: " +
+                "Last X-Plane -> Device (serial): " +
                 (telemetry.lastDataRefSent.empty() ?
                     std::string{ "none" } :
                     telemetry.lastDataRefSent));
@@ -873,7 +922,7 @@ namespace
             if (engagementState_ == DeviceEngagementState::Scanning)
             {
                 debugLog(
-                    "Phoenix: engage devices requested while discovery is already active.\n");
+                    "XPLLink: engage devices requested while discovery is already active.\n");
                 return;
             }
 
@@ -906,7 +955,7 @@ namespace
 
             std::ostringstream message;
             message
-                << "Phoenix: disengaged "
+                << "XPLLink: disengaged "
                 << count
                 << " device(s).\n";
 
@@ -919,7 +968,7 @@ namespace
             {
                 std::ostringstream message;
                 message
-                    << "Phoenix: disengage requested because "
+                    << "XPLLink: disengage requested because "
                     << pendingDisengageReason_
                     << ".\n";
                 debugLog(message.str());
@@ -950,7 +999,7 @@ namespace
 
             std::ostringstream message;
             message
-                << "Phoenix: engaging devices because "
+                << "XPLLink: engaging devices because "
                 << reason
                 << ".\n";
             debugLog(message.str());
@@ -983,11 +1032,11 @@ namespace
             for (const auto& port : ports)
             {
                 const auto kind =
-                    phoenix::serial::SerialDeviceClassifier::classify(port);
+                    xpllink::serial::SerialDeviceClassifier::classify(port);
 
-                if (kind == phoenix::serial::SerialDeviceKind::Bluetooth ||
-                    kind == phoenix::serial::SerialDeviceKind::Suspect ||
-                    kind == phoenix::serial::SerialDeviceKind::BuiltInSerial)
+                if (kind == xpllink::serial::SerialDeviceKind::Bluetooth ||
+                    kind == xpllink::serial::SerialDeviceKind::Suspect ||
+                    kind == xpllink::serial::SerialDeviceKind::BuiltInSerial)
                 {
                     logSerialPortInformation(
                         port,
@@ -1023,7 +1072,7 @@ namespace
 
             std::ostringstream message;
             message
-                << "Phoenix: engaging devices, "
+                << "XPLLink: engaging devices, "
                 << portsToProbe_.size()
                 << " candidate serial port(s).\n";
             debugLog(message.str());
@@ -1200,7 +1249,7 @@ namespace
             }
 
             if (activeProbe_->controlMode ==
-                phoenix::serial::NativeSerialControlMode::DtrRtsEnabled)
+                xpllink::serial::NativeSerialControlMode::DtrRtsEnabled)
             {
                 return false;
             }
@@ -1221,7 +1270,7 @@ namespace
             std::string_view reason)
         {
             if (probe.controlMode ==
-                phoenix::serial::NativeSerialControlMode::DtrRtsEnabled)
+                xpllink::serial::NativeSerialControlMode::DtrRtsEnabled)
             {
                 return false;
             }
@@ -1238,14 +1287,14 @@ namespace
             }
 
             probe.controlMode =
-                phoenix::serial::NativeSerialControlMode::DtrRtsEnabled;
+                xpllink::serial::NativeSerialControlMode::DtrRtsEnabled;
             probe.transport =
                 transportFactory_.create(
                     probe.port.portName,
                     115200,
                     probe.controlMode);
             probe.parser =
-                phoenix::protocol::legacy::LegacyFrameParser{};
+                xpllink::protocol::legacy::LegacyFrameParser{};
             probe.device =
                 {};
             probe.deadline =
@@ -1292,8 +1341,8 @@ namespace
             IncrementalProbe& probe)
         {
             const auto request =
-                phoenix::protocol::legacy::makeFrame(
-                    phoenix::protocol::legacy::sendNameCommand);
+                xpllink::protocol::legacy::makeFrame(
+                    xpllink::protocol::legacy::sendNameCommand);
 
             const std::size_t bytesWritten =
                 probe.transport->write(request);
@@ -1303,7 +1352,7 @@ namespace
                 bytesWritten > 0)
             {
                 serialTrace_.bytes(
-                    phoenix::logging::ByteDumpDirection::Transmit,
+                    xpllink::logging::ByteDumpDirection::Transmit,
                     probe.port.portName,
                     std::span<const std::byte>{
                         request.data(),
@@ -1323,7 +1372,7 @@ namespace
             {
                 std::ostringstream message;
                 message
-                    << "Phoenix: probe read "
+                    << "XPLLink: probe read "
                     << bytesRead
                     << " byte(s) from "
                     << probe.port.portName
@@ -1338,7 +1387,7 @@ namespace
                 bytesRead > 0)
             {
                 serialTrace_.bytes(
-                    phoenix::logging::ByteDumpDirection::Receive,
+                    xpllink::logging::ByteDumpDirection::Receive,
                     probe.port.portName,
                     std::span<const std::byte>{
                         buffer.data(),
@@ -1356,14 +1405,14 @@ namespace
             for (const auto& frame : frames)
             {
                 if (frame.command ==
-                    phoenix::protocol::legacy::nameResponseCommand)
+                    xpllink::protocol::legacy::nameResponseCommand)
                 {
                     probe.device.name =
                         extractQuotedString(frame.payload);
 
                     std::ostringstream message;
                     message
-                        << "Phoenix: probe received name from "
+                        << "XPLLink: probe received name from "
                         << probe.port.portName
                         << ": "
                         << probe.device.name
@@ -1371,14 +1420,14 @@ namespace
                     debugLog(message.str());
                 }
                 else if (frame.command ==
-                    phoenix::protocol::legacy::versionResponseCommand)
+                    xpllink::protocol::legacy::versionResponseCommand)
                 {
                     probe.device.version =
                         extractQuotedString(frame.payload);
 
                     std::ostringstream message;
                     message
-                        << "Phoenix: probe received version from "
+                        << "XPLLink: probe received version from "
                         << probe.port.portName
                         << ": "
                         << probe.device.version
@@ -1437,7 +1486,7 @@ namespace
 
             std::ostringstream message;
             message
-                << "Phoenix: discovered "
+                << "XPLLink: discovered "
                 << deviceName
                 << " on "
                 << portName
@@ -1486,7 +1535,7 @@ namespace
                 status.str();
 
             debugLog(
-                "Phoenix: device engagement complete.\n");
+                "XPLLink: device engagement complete.\n");
         }
 
         void maybeAutoCloseStatusWindow(
@@ -1572,8 +1621,8 @@ namespace
 
             debugLog(
                 serialTraceEnabled_ ?
-                    "Phoenix: serial trace logging enabled from menu.\n" :
-                    "Phoenix: serial trace logging disabled from menu.\n");
+                    "XPLLink: serial trace logging enabled from menu.\n" :
+                    "XPLLink: serial trace logging disabled from menu.\n");
         }
 
         void clearProfileCache()
@@ -1586,7 +1635,7 @@ namespace
                 std::ostringstream message;
 
                 message
-                    << "Phoenix: profile cache is already empty: "
+                    << "XPLLink: profile cache is already empty: "
                     << profileDirectory_.string()
                     << ".\n";
 
@@ -1622,14 +1671,14 @@ namespace
             if (error)
             {
                 message
-                    << "Phoenix: unable to clear profile cache: "
+                    << "XPLLink: unable to clear profile cache: "
                     << error.message()
                     << ".\n";
             }
             else
             {
                 message
-                    << "Phoenix: cleared "
+                    << "XPLLink: cleared "
                     << removed
                     << " profile cache file(s) from "
                     << profileDirectory_.string()
@@ -1639,13 +1688,25 @@ namespace
             debugLog(message.str());
         }
 
-        phoenix::xplane::sdk::XPlaneSdkApi api_;
+        xpllink::xplane::sdk::XPlaneSdkApi api_;
         PluginInteractionTelemetry interactionTelemetry_;
-        phoenix::xplane::sdk::XPlaneSdkBridgeFactory bridgeFactory_{
+        xpllink::xplane::sdk::XPlaneSdkBridgeFactory bridgeFactory_{
             api_,
             &interactionTelemetry_
         };
         PluginLegacyDeviceObserverFactory observerFactory_{
+            [this](
+                std::string_view name,
+                std::string_view serialValue,
+                std::string_view xplaneValue,
+                std::optional<int> element)
+            {
+                interactionTelemetry_.dataRefReceivedFromDevice(
+                    name,
+                    serialValue,
+                    xplaneValue,
+                    element);
+            },
             [this](
                 std::string_view name,
                 std::string_view value,
@@ -1662,11 +1723,11 @@ namespace
         std::filesystem::path serialTracePath_;
         std::filesystem::path settingsPath_;
         ToggleableSerialTraceSink serialTrace_;
-        phoenix::runtime::DeviceRuntimeManager deviceRuntime_;
-        phoenix::serial::NativeSerialEnumerator serialEnumerator_;
-        phoenix::serial::NativeSerialTransportFactory transportFactory_;
-        phoenix::plugin::PhoenixStatusWindow statusWindow_;
-        std::vector<phoenix::serial::SerialPortInfo> portsToProbe_;
+        xpllink::runtime::DeviceRuntimeManager deviceRuntime_;
+        xpllink::serial::NativeSerialEnumerator serialEnumerator_;
+        xpllink::serial::NativeSerialTransportFactory transportFactory_;
+        xpllink::plugin::XPLLinkStatusWindow statusWindow_;
+        std::vector<xpllink::serial::SerialPortInfo> portsToProbe_;
         std::optional<IncrementalProbe> activeProbe_;
         DeviceEngagementState engagementState_ =
             DeviceEngagementState::Idle;
@@ -1688,9 +1749,9 @@ namespace
         bool serialTraceEnabled_ = false;
     };
 
-    std::unique_ptr<PhoenixPluginRuntime> runtime;
+    std::unique_ptr<XPLLinkPluginRuntime> runtime;
 
-    float phoenixFlightLoopCallback(
+    float xpllinkFlightLoopCallback(
         float,
         float,
         int,
@@ -1725,10 +1786,10 @@ extern "C"
         copyPluginString(outDesc, PluginDescription);
 
         runtime =
-            std::make_unique<PhoenixPluginRuntime>();
+            std::make_unique<XPLLinkPluginRuntime>();
 
         XPLMRegisterFlightLoopCallback(
-            phoenixFlightLoopCallback,
+            xpllinkFlightLoopCallback,
             -1.0f,
             nullptr);
 
@@ -1744,7 +1805,7 @@ extern "C"
     PLUGIN_API void XPluginStop()
     {
         XPLMUnregisterFlightLoopCallback(
-            phoenixFlightLoopCallback,
+            xpllinkFlightLoopCallback,
             nullptr);
 
         runtime.reset();

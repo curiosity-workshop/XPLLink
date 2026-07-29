@@ -1,11 +1,11 @@
-#include <phoenix/runtime/LegacyDeviceSession.h>
+#include <xpllink/runtime/LegacyDeviceSession.h>
 
-#include <phoenix/logging/Log.h>
-#include <phoenix/protocol/legacy/LegacyFrame.h>
+#include <xpllink/logging/Log.h>
+#include <xpllink/protocol/legacy/LegacyFrame.h>
 
 #include <algorithm>
 
-namespace phoenix::runtime
+namespace xpllink::runtime
 {
     LegacyDeviceSession::LegacyDeviceSession(
         transport::IByteTransport& transport,

@@ -1,4 +1,4 @@
-#include <phoenix/profile/JsonDeviceProfileStore.h>
+#include <xpllink/profile/JsonDeviceProfileStore.h>
 
 #include <cassert>
 #include <filesystem>
@@ -7,17 +7,18 @@ int main()
 {
     const auto directory =
         std::filesystem::temp_directory_path() /
-        "PhoenixJsonDeviceProfileStoreTests";
+        "XPLLinkJsonDeviceProfileStoreTests";
 
-    phoenix::profile::JsonDeviceProfileStore store{
+    xpllink::profile::JsonDeviceProfileStore store{
         directory
     };
 
-    phoenix::profile::DeviceProfile profile;
+    xpllink::profile::DeviceProfile profile;
+    profile.cacheSchemaVersion = 1;
     profile.deviceName = "XPLPro 737MCP";
     profile.deviceVersion = "Jul 14 2026 17:31:12";
 
-    phoenix::profile::DeviceProfileDataRef dataRef;
+    xpllink::profile::DeviceProfileDataRef dataRef;
     dataRef.handle = 7;
     dataRef.name = "sim/example/quoted_\"_dataref";
     dataRef.xplaneType = 6;
@@ -48,6 +49,7 @@ int main()
         store.load(store.profilePathFor(profile));
 
     assert(loaded);
+    assert(loaded->cacheSchemaVersion == 1);
     assert(loaded->protocol == "xplpro-legacy");
     assert(loaded->deviceName == profile.deviceName);
     assert(loaded->deviceVersion == profile.deviceVersion);

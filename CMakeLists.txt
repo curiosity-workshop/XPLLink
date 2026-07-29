@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(Phoenix
+project(XPLLink
     VERSION 0.1.0
     LANGUAGES CXX)
 
-set(PHOENIX_PLUGIN_NAME
+set(XPLLINK_PLUGIN_NAME
     "XPLLink"
     CACHE STRING
     "User-facing X-Plane plugin name and output .xpl base name")
@@ -12,75 +12,75 @@ set(PHOENIX_PLUGIN_NAME
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(PHOENIX_BUILD_XPLANE_PLUGIN
+option(XPLLINK_BUILD_XPLANE_PLUGIN
     "Build the X-Plane plugin target"
     OFF)
 
-set(PHOENIX_XPLANE_SDK_PATH
+set(XPLLINK_XPLANE_SDK_PATH
     ""
     CACHE PATH
     "Path to the X-Plane SDK root")
 
-set(PHOENIX_XPLANE_ROOT
+set(XPLLINK_XPLANE_ROOT
     ""
     CACHE PATH
     "Optional local X-Plane installation root for plugin deployment")
 
-set(PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR
+set(XPLLINK_XPLANE_PLUGIN_DEPLOY_DIR
     ""
     CACHE PATH
     "Optional exact directory where the plugin .xpl should be copied after build")
 
-set(PHOENIX_DISTRIBUTION_DIR
-    "${CMAKE_SOURCE_DIR}/dist/${PHOENIX_PLUGIN_NAME}"
+set(XPLLINK_DISTRIBUTION_DIR
+    "${CMAKE_SOURCE_DIR}/dist/${XPLLINK_PLUGIN_NAME}"
     CACHE PATH
     "Directory where distributable plugin files are copied after build")
 
-option(PHOENIX_DISTRIBUTE_DEBUG_BUILDS
-    "Allow Debug plugin builds to update the distributable dist/Phoenix folder"
+option(XPLLINK_DISTRIBUTE_DEBUG_BUILDS
+    "Allow Debug plugin builds to update the distributable dist/XPLLink folder"
     OFF)
 
-if(NOT PHOENIX_XPLANE_SDK_PATH AND DEFINED ENV{XPLANE_SDK_ROOT})
-    set(PHOENIX_XPLANE_SDK_PATH
+if(NOT XPLLINK_XPLANE_SDK_PATH AND DEFINED ENV{XPLANE_SDK_ROOT})
+    set(XPLLINK_XPLANE_SDK_PATH
         "$ENV{XPLANE_SDK_ROOT}"
         CACHE PATH
         "Path to the X-Plane SDK root"
         FORCE)
 endif()
 
-if(NOT PHOENIX_XPLANE_SDK_PATH AND EXISTS "${CMAKE_SOURCE_DIR}/third_party/xplane_sdk/CHeaders/XPLM/XPLMDataAccess.h")
-    set(PHOENIX_XPLANE_SDK_PATH
+if(NOT XPLLINK_XPLANE_SDK_PATH AND EXISTS "${CMAKE_SOURCE_DIR}/third_party/xplane_sdk/CHeaders/XPLM/XPLMDataAccess.h")
+    set(XPLLINK_XPLANE_SDK_PATH
         "${CMAKE_SOURCE_DIR}/third_party/xplane_sdk"
         CACHE PATH
         "Path to the X-Plane SDK root"
         FORCE)
 endif()
 
-set(PHOENIX_SERIAL_SOURCES
+set(XPLLINK_SERIAL_SOURCES
     core/src/serial/SerialDeviceClassifier.cpp
 )
 
 if(WIN32)
-    list(APPEND PHOENIX_SERIAL_SOURCES
+    list(APPEND XPLLINK_SERIAL_SOURCES
         core/src/serial/WindowsSerialEnumerator.cpp
         core/src/serial/WindowsSerialTransport.cpp
         core/src/serial/WindowsSerialTransportFactory.cpp
     )
 elseif(APPLE)
-    list(APPEND PHOENIX_SERIAL_SOURCES
+    list(APPEND XPLLINK_SERIAL_SOURCES
         core/src/serial/MacSerialEnumerator.cpp
         core/src/serial/MacSerialTransport.cpp
         core/src/serial/MacSerialTransportFactory.cpp
     )
 else()
-    list(APPEND PHOENIX_SERIAL_SOURCES
+    list(APPEND XPLLINK_SERIAL_SOURCES
         core/src/serial/LinuxSerialEnumerator.cpp
         core/src/serial/LinuxSerialTransport.cpp
         core/src/serial/LinuxSerialTransportFactory.cpp
     )
 endif()
 
-add_executable(Phoenix
+add_executable(XPLLink
     # Application
     core/src/main.cpp
     core/src/dev/DevelopmentDeviceLoop.cpp
@@ -104,7 +104,7 @@ add_executable(Phoenix
     core/src/runtime/LegacyUpdateScheduler.cpp
 
     # Serial
-    ${PHOENIX_SERIAL_SOURCES}
+    ${XPLLINK_SERIAL_SOURCES}
 
     # Discovery
     core/src/discovery/LegacyXplproProbe.cpp
@@ -113,18 +113,18 @@ add_executable(Phoenix
     core/src/xplane/sdk/XPlaneSdkBridge.cpp
 )
 
-target_include_directories(Phoenix
+target_include_directories(XPLLink
     PRIVATE
         core/include
 )
 
-target_compile_definitions(Phoenix
+target_compile_definitions(XPLLink
     PRIVATE
-        PHOENIX_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+        XPLLINK_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 )
 
 if(WIN32)
-    target_link_libraries(Phoenix
+    target_link_libraries(XPLLink
         PRIVATE
             Setupapi
     )
@@ -132,24 +132,24 @@ endif()
 
 enable_testing()
 
-add_executable(PhoenixProtocolTests
+add_executable(XPLLinkProtocolTests
     tests/protocol/LegacyFrameParserTests.cpp
     core/src/protocol/legacy/LegacyFrame.cpp
     core/src/protocol/legacy/LegacyFrameParser.cpp
     core/src/protocol/legacy/LegacyMessage.cpp
 )
 
-target_include_directories(PhoenixProtocolTests
+target_include_directories(XPLLinkProtocolTests
     PRIVATE
         core/include
 )
 
 add_test(
-    NAME PhoenixProtocolTests
-    COMMAND PhoenixProtocolTests
+    NAME XPLLinkProtocolTests
+    COMMAND XPLLinkProtocolTests
 )
 
-add_executable(PhoenixRuntimeTests
+add_executable(XPLLinkRuntimeTests
     tests/runtime/LegacyDeviceSessionTests.cpp
     core/src/logging/SerialTraceLogger.cpp
     core/src/protocol/legacy/LegacyFrame.cpp
@@ -158,17 +158,17 @@ add_executable(PhoenixRuntimeTests
     core/src/runtime/LegacyDeviceSession.cpp
 )
 
-target_include_directories(PhoenixRuntimeTests
+target_include_directories(XPLLinkRuntimeTests
     PRIVATE
         core/include
 )
 
 add_test(
-    NAME PhoenixRuntimeTests
-    COMMAND PhoenixRuntimeTests
+    NAME XPLLinkRuntimeTests
+    COMMAND XPLLinkRuntimeTests
 )
 
-add_executable(PhoenixDeviceControllerTests
+add_executable(XPLLinkDeviceControllerTests
     tests/runtime/LegacyDeviceControllerTests.cpp
     core/src/logging/SerialTraceLogger.cpp
     core/src/protocol/legacy/LegacyFrame.cpp
@@ -178,17 +178,17 @@ add_executable(PhoenixDeviceControllerTests
     core/src/runtime/LegacyDeviceSession.cpp
 )
 
-target_include_directories(PhoenixDeviceControllerTests
+target_include_directories(XPLLinkDeviceControllerTests
     PRIVATE
         core/include
 )
 
 add_test(
-    NAME PhoenixDeviceControllerTests
-    COMMAND PhoenixDeviceControllerTests
+    NAME XPLLinkDeviceControllerTests
+    COMMAND XPLLinkDeviceControllerTests
 )
 
-add_executable(PhoenixUpdateSchedulerTests
+add_executable(XPLLinkUpdateSchedulerTests
     tests/runtime/LegacyUpdateSchedulerTests.cpp
     core/src/logging/SerialTraceLogger.cpp
     core/src/protocol/legacy/LegacyFrame.cpp
@@ -199,64 +199,64 @@ add_executable(PhoenixUpdateSchedulerTests
     core/src/runtime/LegacyUpdateScheduler.cpp
 )
 
-target_include_directories(PhoenixUpdateSchedulerTests
+target_include_directories(XPLLinkUpdateSchedulerTests
     PRIVATE
         core/include
 )
 
 add_test(
-    NAME PhoenixUpdateSchedulerTests
-    COMMAND PhoenixUpdateSchedulerTests
+    NAME XPLLinkUpdateSchedulerTests
+    COMMAND XPLLinkUpdateSchedulerTests
 )
 
-add_executable(PhoenixProfileTests
+add_executable(XPLLinkProfileTests
     tests/profile/JsonDeviceProfileStoreTests.cpp
     core/src/profile/JsonDeviceProfileStore.cpp
 )
 
-target_include_directories(PhoenixProfileTests
+target_include_directories(XPLLinkProfileTests
     PRIVATE
         core/include
 )
 
 add_test(
-    NAME PhoenixProfileTests
-    COMMAND PhoenixProfileTests
+    NAME XPLLinkProfileTests
+    COMMAND XPLLinkProfileTests
 )
 
-add_executable(PhoenixXPlaneSdkBridgeTests
+add_executable(XPLLinkXPlaneSdkBridgeTests
     tests/xplane/XPlaneSdkBridgeTests.cpp
     core/src/xplane/sdk/XPlaneSdkBridge.cpp
 )
 
-target_include_directories(PhoenixXPlaneSdkBridgeTests
+target_include_directories(XPLLinkXPlaneSdkBridgeTests
     PRIVATE
         core/include
 )
 
 add_test(
-    NAME PhoenixXPlaneSdkBridgeTests
-    COMMAND PhoenixXPlaneSdkBridgeTests
+    NAME XPLLinkXPlaneSdkBridgeTests
+    COMMAND XPLLinkXPlaneSdkBridgeTests
 )
 
-if(PHOENIX_BUILD_XPLANE_PLUGIN)
-    if(NOT PHOENIX_XPLANE_SDK_PATH)
+if(XPLLINK_BUILD_XPLANE_PLUGIN)
+    if(NOT XPLLINK_XPLANE_SDK_PATH)
         message(FATAL_ERROR
-            "PHOENIX_XPLANE_SDK_PATH must be set when PHOENIX_BUILD_XPLANE_PLUGIN is ON. "
+            "XPLLINK_XPLANE_SDK_PATH must be set when XPLLINK_BUILD_XPLANE_PLUGIN is ON. "
             "Set it directly, set XPLANE_SDK_ROOT, or place the SDK at third_party/xplane_sdk.")
     endif()
 
     message(STATUS
-        "Using X-Plane SDK: ${PHOENIX_XPLANE_SDK_PATH}")
+        "Using X-Plane SDK: ${XPLLINK_XPLANE_SDK_PATH}")
 
-    set(PHOENIX_XPLANE_SDK_INCLUDE_DIRS
-        "${PHOENIX_XPLANE_SDK_PATH}/CHeaders/XPLM"
-        "${PHOENIX_XPLANE_SDK_PATH}/CHeaders/Widgets"
+    set(XPLLINK_XPLANE_SDK_INCLUDE_DIRS
+        "${XPLLINK_XPLANE_SDK_PATH}/CHeaders/XPLM"
+        "${XPLLINK_XPLANE_SDK_PATH}/CHeaders/Widgets"
     )
 
-    add_library(PhoenixXPlanePlugin MODULE
+    add_library(XPLLinkXPlanePlugin MODULE
         plugin/XPlanePlugin.cpp
-        plugin/PhoenixStatusWindow.cpp
+        plugin/XPLLinkStatusWindow.cpp
 
         # Logging
         core/src/logging/Log.cpp
@@ -277,20 +277,20 @@ if(PHOENIX_BUILD_XPLANE_PLUGIN)
         core/src/runtime/LegacyUpdateScheduler.cpp
 
         # Serial
-        ${PHOENIX_SERIAL_SOURCES}
+        ${XPLLINK_SERIAL_SOURCES}
 
         # X-Plane SDK adapter
         core/src/xplane/sdk/XPlaneSdkApi.cpp
         core/src/xplane/sdk/XPlaneSdkBridge.cpp
     )
 
-    target_include_directories(PhoenixXPlanePlugin
+    target_include_directories(XPLLinkXPlanePlugin
         PRIVATE
             core/include
-            ${PHOENIX_XPLANE_SDK_INCLUDE_DIRS}
+            ${XPLLINK_XPLANE_SDK_INCLUDE_DIRS}
     )
 
-    target_compile_definitions(PhoenixXPlanePlugin
+    target_compile_definitions(XPLLinkXPlanePlugin
         PRIVATE
             XPLM200=1
             XPLM210=1
@@ -299,104 +299,104 @@ if(PHOENIX_BUILD_XPLANE_PLUGIN)
             XPLM400=1
     )
 
-    set_target_properties(PhoenixXPlanePlugin
+    set_target_properties(XPLLinkXPlanePlugin
         PROPERTIES
             PREFIX ""
-            OUTPUT_NAME "${PHOENIX_PLUGIN_NAME}"
+            OUTPUT_NAME "${XPLLINK_PLUGIN_NAME}"
             SUFFIX ".xpl"
     )
 
     if(WIN32)
-        target_compile_definitions(PhoenixXPlanePlugin
+        target_compile_definitions(XPLLinkXPlanePlugin
             PRIVATE
                 IBM=1
                 APL=0
                 LIN=0
         )
 
-        target_link_libraries(PhoenixXPlanePlugin
+        target_link_libraries(XPLLinkXPlanePlugin
             PRIVATE
-                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Win/XPLM_64.lib"
-                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Win/XPWidgets_64.lib"
+                "${XPLLINK_XPLANE_SDK_PATH}/Libraries/Win/XPLM_64.lib"
+                "${XPLLINK_XPLANE_SDK_PATH}/Libraries/Win/XPWidgets_64.lib"
                 Setupapi
         )
 
-        set(PHOENIX_XPLANE_PLUGIN_ABI_DIR "win_x64")
+        set(XPLLINK_XPLANE_PLUGIN_ABI_DIR "win_x64")
     elseif(APPLE)
-        target_compile_definitions(PhoenixXPlanePlugin
+        target_compile_definitions(XPLLinkXPlanePlugin
             PRIVATE
                 IBM=0
                 APL=1
                 LIN=0
         )
 
-        target_link_libraries(PhoenixXPlanePlugin
+        target_link_libraries(XPLLinkXPlanePlugin
             PRIVATE
-                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Mac/XPLM.framework/Versions/C/XPLM"
-                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Mac/XPWidgets.framework/Versions/C/XPWidgets"
+                "${XPLLINK_XPLANE_SDK_PATH}/Libraries/Mac/XPLM.framework/Versions/C/XPLM"
+                "${XPLLINK_XPLANE_SDK_PATH}/Libraries/Mac/XPWidgets.framework/Versions/C/XPWidgets"
         )
 
-        set(PHOENIX_XPLANE_PLUGIN_ABI_DIR "mac_x64")
+        set(XPLLINK_XPLANE_PLUGIN_ABI_DIR "mac_x64")
     else()
-        target_compile_definitions(PhoenixXPlanePlugin
+        target_compile_definitions(XPLLinkXPlanePlugin
             PRIVATE
                 IBM=0
                 APL=0
                 LIN=1
         )
 
-        target_link_libraries(PhoenixXPlanePlugin
+        target_link_libraries(XPLLinkXPlanePlugin
             PRIVATE
-                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Lin/XPLM_64.so"
-                "${PHOENIX_XPLANE_SDK_PATH}/Libraries/Lin/XPWidgets_64.so"
+                "${XPLLINK_XPLANE_SDK_PATH}/Libraries/Lin/XPLM_64.so"
+                "${XPLLINK_XPLANE_SDK_PATH}/Libraries/Lin/XPWidgets_64.so"
         )
 
-        set(PHOENIX_XPLANE_PLUGIN_ABI_DIR "lin_x64")
+        set(XPLLINK_XPLANE_PLUGIN_ABI_DIR "lin_x64")
     endif()
 
-    if(NOT PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR AND PHOENIX_XPLANE_ROOT)
-        set(PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR
-            "${PHOENIX_XPLANE_ROOT}/Resources/plugins/${PHOENIX_PLUGIN_NAME}/${PHOENIX_XPLANE_PLUGIN_ABI_DIR}"
+    if(NOT XPLLINK_XPLANE_PLUGIN_DEPLOY_DIR AND XPLLINK_XPLANE_ROOT)
+        set(XPLLINK_XPLANE_PLUGIN_DEPLOY_DIR
+            "${XPLLINK_XPLANE_ROOT}/Resources/plugins/${XPLLINK_PLUGIN_NAME}/${XPLLINK_XPLANE_PLUGIN_ABI_DIR}"
             CACHE PATH
             "Optional exact directory where the plugin .xpl should be copied after build"
             FORCE)
     endif()
 
-    if(PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR)
+    if(XPLLINK_XPLANE_PLUGIN_DEPLOY_DIR)
         add_custom_command(
-            TARGET PhoenixXPlanePlugin
+            TARGET XPLLinkXPlanePlugin
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory
-                    "${PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR}"
+                    "${XPLLINK_XPLANE_PLUGIN_DEPLOY_DIR}"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<TARGET_FILE:PhoenixXPlanePlugin>"
-                    "${PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR}/$<TARGET_FILE_NAME:PhoenixXPlanePlugin>"
+                    "$<TARGET_FILE:XPLLinkXPlanePlugin>"
+                    "${XPLLINK_XPLANE_PLUGIN_DEPLOY_DIR}/$<TARGET_FILE_NAME:XPLLinkXPlanePlugin>"
             COMMENT
-                    "Deploying ${PHOENIX_PLUGIN_NAME}.xpl to ${PHOENIX_XPLANE_PLUGIN_DEPLOY_DIR}"
+                    "Deploying ${XPLLINK_PLUGIN_NAME}.xpl to ${XPLLINK_XPLANE_PLUGIN_DEPLOY_DIR}"
         )
     endif()
 
-    set(PHOENIX_CAN_UPDATE_DISTRIBUTION TRUE)
+    set(XPLLINK_CAN_UPDATE_DISTRIBUTION TRUE)
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND
-        NOT PHOENIX_DISTRIBUTE_DEBUG_BUILDS)
-        set(PHOENIX_CAN_UPDATE_DISTRIBUTION FALSE)
+        NOT XPLLINK_DISTRIBUTE_DEBUG_BUILDS)
+        set(XPLLINK_CAN_UPDATE_DISTRIBUTION FALSE)
     endif()
 
-    if(PHOENIX_DISTRIBUTION_DIR AND PHOENIX_CAN_UPDATE_DISTRIBUTION)
-        set(PHOENIX_DISTRIBUTION_PLUGIN_DIR
-            "${PHOENIX_DISTRIBUTION_DIR}/${PHOENIX_XPLANE_PLUGIN_ABI_DIR}")
+    if(XPLLINK_DISTRIBUTION_DIR AND XPLLINK_CAN_UPDATE_DISTRIBUTION)
+        set(XPLLINK_DISTRIBUTION_PLUGIN_DIR
+            "${XPLLINK_DISTRIBUTION_DIR}/${XPLLINK_XPLANE_PLUGIN_ABI_DIR}")
 
         add_custom_command(
-            TARGET PhoenixXPlanePlugin
+            TARGET XPLLinkXPlanePlugin
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory
-                    "${PHOENIX_DISTRIBUTION_PLUGIN_DIR}"
+                    "${XPLLINK_DISTRIBUTION_PLUGIN_DIR}"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<TARGET_FILE:PhoenixXPlanePlugin>"
-                    "${PHOENIX_DISTRIBUTION_PLUGIN_DIR}/$<TARGET_FILE_NAME:PhoenixXPlanePlugin>"
+                    "$<TARGET_FILE:XPLLinkXPlanePlugin>"
+                    "${XPLLINK_DISTRIBUTION_PLUGIN_DIR}/$<TARGET_FILE_NAME:XPLLinkXPlanePlugin>"
             COMMENT
-                    "Updating distributable ${PHOENIX_PLUGIN_NAME} plugin at ${PHOENIX_DISTRIBUTION_PLUGIN_DIR}"
+                    "Updating distributable ${XPLLINK_PLUGIN_NAME} plugin at ${XPLLINK_DISTRIBUTION_PLUGIN_DIR}"
         )
     endif()
 endif()

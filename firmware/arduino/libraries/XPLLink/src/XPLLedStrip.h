@@ -1,6 +1,6 @@
-//   XPLLedStrip.h - Library for LED strips 
+//   XPLLedStrip.h - Library for LED strips
 //   Created by Curiosity Workshop, Michael Gerlicher,  2024
-//   
+//
 //   To report problems, download updates and examples, suggest enhancements or get technical support, please visit:
 //      discord:  https://discord.gg/gzXetjEST4
 //      patreon:  www.patreon.com/curiosityworkshop
@@ -18,19 +18,19 @@
 // Parameters around the interface
 
 
-#ifndef XPLLEDSTRIP_MAXPIXELS 
+#ifndef XPLLEDSTRIP_MAXPIXELS
 #define XPLLEDSTRIP_MAXPIXELS     16                  //Default to 16.  Define this in your main sketch to override
 #endif
 
 
-/// @brief Core class for the XPLPro Arduino library
+/// @brief Core class for the XPLLink Arduino library
 class XPLLedStrip
 {
 public:
-   
+
     XPLLedStrip(void);
 
-    void begin(XPLLink* xplpro, uint16_t inPin);     // pin number
+    void begin(XPLLink* link, uint16_t inPin);     // pin number
     void check(inStruct* inData);
     void test(void);
     int16_t addPixel(dref_handle inHandle, int inElement, uint16_t inNumber, uint8_t inR, uint8_t inG, uint8_t inB);
@@ -41,8 +41,8 @@ public:
 
 private:
     int16_t _findPixel(dref_handle inHandle, int inElement);
-    
-    XPLLink* _XP;
+
+    XPLLink* link_;
 
     int16_t _pixelCount;
 
@@ -70,11 +70,11 @@ private:
 XPLLedStrip::XPLLedStrip(void)
 {
 
- 
- 
+
+
 }
 
-void XPLLedStrip::begin(XPLLink* xplpro, uint16_t inPin)
+void XPLLedStrip::begin(XPLLink* link, uint16_t inPin)
 {
 
 
@@ -87,9 +87,9 @@ void XPLLedStrip::begin(XPLLink* xplpro, uint16_t inPin)
     //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
     _strip = Adafruit_NeoPixel(XPLLEDSTRIP_MAXPIXELS, inPin, NEO_GRB + NEO_KHZ800);
     _strip.begin();
-    _XP = xplpro;
+    link_ = link;
     clear();
-   
+
 }
 
 void XPLLedStrip::clear(void)           // call this prior to adding pins if not the first run
@@ -119,14 +119,14 @@ void XPLLedStrip::test(void)
 
     _strip.fill(_strip.Color(0, 0, 0), 0, XPLLEDSTRIP_MAXPIXELS);
     _strip.show();
-    
+
 
 }
 
 void XPLLedStrip::check(inStruct *inData)
 {
     int pixelNum = _findPixel(inData->handle, inData->element);
-    if (pixelNum >= 0)    
+    if (pixelNum >= 0)
         switch (inData->type)
         {
         case xplmType_Int:
@@ -136,14 +136,14 @@ void XPLLedStrip::check(inStruct *inData)
             {
                 writePixel(pixelNum, 0);
             }
-            
+
             break;
 
         case xplmType_Float:
         case xplmType_FloatArray:
             writePixel(pixelNum, inData->inFloat );
-           
-            break; 
+
+            break;
         }
 
 
@@ -169,12 +169,12 @@ int16_t XPLLedStrip::addPixel(dref_handle inHandle, int inElement, uint16_t inNu
 
 void XPLLedStrip::writePixel(uint16_t inPixel, float inBrightness)   // brightness is percentage*100 0-100
 {
- 
+
     _strip.setPixelColor(_pixels[inPixel].number,
             (inBrightness *  _pixels[inPixel].cRed) ,
             (inBrightness *  _pixels[inPixel].cGreen) ,
            (inBrightness *  _pixels[inPixel].cBlue)  );
-   
+
     _strip.show();
 
 

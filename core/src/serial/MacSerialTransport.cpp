@@ -1,4 +1,4 @@
-#include <phoenix/serial/MacSerialTransport.h>
+#include <xpllink/serial/MacSerialTransport.h>
 
 #include <algorithm>
 #include <cerrno>
@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <utility>
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     namespace
     {

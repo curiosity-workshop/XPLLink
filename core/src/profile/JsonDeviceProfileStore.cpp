@@ -1,4 +1,4 @@
-#include <phoenix/profile/JsonDeviceProfileStore.h>
+#include <xpllink/profile/JsonDeviceProfileStore.h>
 
 #include <algorithm>
 #include <cctype>
@@ -8,7 +8,7 @@
 #include <string>
 #include <variant>
 
-namespace phoenix::profile
+namespace xpllink::profile
 {
     namespace
     {
@@ -823,6 +823,11 @@ namespace phoenix::profile
         }
 
         stream << "{\n";
+        writeIntProperty(
+            stream,
+            2,
+            "cacheSchemaVersion",
+            profile.cacheSchemaVersion);
         writeStringProperty(stream, 2, "protocol", profile.protocol);
         writeStringProperty(stream, 2, "deviceName", profile.deviceName);
         writeStringProperty(stream, 2, "deviceVersion", profile.deviceVersion);
@@ -887,6 +892,12 @@ namespace phoenix::profile
         }
 
         DeviceProfile profile;
+
+        if (const auto* value = find(*object, "cacheSchemaVersion"))
+        {
+            profile.cacheSchemaVersion =
+                asInt(*value).value_or(profile.cacheSchemaVersion);
+        }
 
         if (const auto* value = find(*object, "protocol"))
         {

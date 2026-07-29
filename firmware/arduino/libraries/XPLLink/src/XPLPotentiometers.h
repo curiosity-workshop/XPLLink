@@ -1,6 +1,6 @@
-//   XPLPotentiometers.h - XPLPro Add-on Library for simple potentiometer connections 
+//   XPLPotentiometers.h - XPLLink add-on Library for simple potentiometer connections
 //   Created by Curiosity Workshop, Michael Gerlicher,  2024
-//   
+//
 //   To report problems, download updates and examples, suggest enhancements or get technical support, please visit:
 //      discord:  https://discord.gg/gzXetjEST4
 //      patreon:  www.patreon.com/curiosityworkshop
@@ -17,17 +17,17 @@
 
 // Parameters around the interface
 #define XPLPOTS_SENDTOHANDLER   0                   // Default is to send switch events to the supplied handler.  This always occurs regardless.
-#define XPLPOTS_DATAREFWRITE    1                   // Update dataref with switch status 
+#define XPLPOTS_DATAREFWRITE    1                   // Update dataref with switch status
 
 #define XPLPOTS_UPDATERATE  100                       // default minimum time between updates in milliseconds
 
 
-#ifndef XPLPOTS_MAXPOTS 
-    #define XPLPOTS_MAXPOTS     10                  //Default to 10.  
+#ifndef XPLPOTS_MAXPOTS
+    #define XPLPOTS_MAXPOTS     10                  //Default to 10.
 #endif
 
 
-/// @brief Core class for the XPLPro Potentiometers Addon
+/// @brief Core class for the XPLLink potentiometers add-on
 class XPLPotentiometers
 {
 public:
@@ -38,31 +38,31 @@ public:
     /// <summary>
     /// @brief begin
     /// </summary>
-    /// <param name="xplpro"></param>
-    void begin(XPLLink *xplpro);
+    /// <param name="link"></param>
+    void begin(XPLLink *link);
 
     int addPin(int inPin, int inMode, int inHandle, int inPrecision, int inLow, int inHigh, int outLow, int outHigh);
     int addPin(int inPin, int inMode, int inHandle, int inElement, int inPrecision, int inLow, int inHigh, int outLow, int outHigh);
     void setUpdateRate(int inRate);
     int getHandle(int inPin);
 
-   
+
     /// @brief Scan pins and call handler if any changes are detected.  Run regularly
-    void check(void);  
+    void check(void);
 
     void clear(void);
-    
+
 private:
- 
-    XPLLink* _XP;
-  
+
+    XPLLink* link_;
+
   int _potCount;             // how many are registered
   int _updateRate;              // in milliseconds
 
 
   void (*_potHandler)(int inSwitchID, float inPotValue) = NULL;  // this function will be called when activity is detected on the pot, if not NULL
-   
-  
+
+
   struct XPLPot
   {
       int arduinoPin;                // connected pin
@@ -89,9 +89,9 @@ XPLPotentiometers::XPLPotentiometers(void (*potHandler)(int inPotID, float inVal
 
 };
 
-void XPLPotentiometers::begin(XPLLink* xplpro)
+void XPLPotentiometers::begin(XPLLink* link)
 {
-    _XP = xplpro;
+    link_ = link;
     clear();
 
 }
@@ -124,7 +124,7 @@ int XPLPotentiometers::addPin(int inPin, int inMode, int inHandle, int inElement
     _pots[_potCount].element = inElement;
     _pots[_potCount].prevValue = -1;        // This will force update to the plugin
 
-    _XP->setScaling(inHandle, inLow, inHigh, outLow, outHigh);
+    link_->setScaling(inHandle, inLow, inHigh, outLow, outHigh);
 
     return _potCount++;
 
@@ -135,16 +135,16 @@ int XPLPotentiometers::getHandle(int inPin)
 {
     for (int i = 0; i < XPLPOTS_MAXPOTS; i++) if (_pots[i].arduinoPin == inPin) return _pots[i].handle;
     return -1;
-   
+
 }
 
 
 void XPLPotentiometers::check(void)
 {
- 
+
   unsigned long timeNow = millis();
 
- 
+
   for (int i = 0; i < _potCount; i++)
   {
       int pinValue = analogRead(_pots[i].arduinoPin);
@@ -159,15 +159,15 @@ void XPLPotentiometers::check(void)
 
          switch (_pots[i].mode)
          {
-         
+
          case XPLPOTS_DATAREFWRITE:
-             
-             if (_pots[i].element < 0) _XP->datarefWrite(_pots[i].handle, pinValue);
-             else                      _XP->datarefWrite(_pots[i].handle, pinValue, _pots[i].element);
+
+             if (_pots[i].element < 0) link_->datarefWrite(_pots[i].handle, pinValue);
+             else                      link_->datarefWrite(_pots[i].handle, pinValue, _pots[i].element);
 
              break;
 
-                 
+
          }
 
          if (_potHandler != NULL) _potHandler(_pots[i].arduinoPin, pinValue);

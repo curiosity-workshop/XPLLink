@@ -1,9 +1,9 @@
-#include <phoenix/logging/Log.h>
+#include <xpllink/logging/Log.h>
 
 #include <iomanip>
 #include <iostream>
 
-namespace phoenix::logging
+namespace xpllink::logging
 {
     namespace
     {

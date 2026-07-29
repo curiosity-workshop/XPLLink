@@ -30,6 +30,8 @@ x86/
 *.ilk
 
 # Runtime logs
+XPLLinkSerial.log
+# Ignore traces produced before the XPLLink rename.
 PhoenixSerial.log
 profiles/*.json
 CockpitLink/logs/

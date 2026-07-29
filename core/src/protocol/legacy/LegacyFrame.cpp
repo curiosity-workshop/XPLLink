@@ -1,6 +1,6 @@
-#include <phoenix/protocol/legacy/LegacyFrame.h>
+#include <xpllink/protocol/legacy/LegacyFrame.h>
 
-namespace phoenix::protocol::legacy
+namespace xpllink::protocol::legacy
 {
     std::vector<std::byte> makeFrame(
         char command,

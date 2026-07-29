@@ -1,4 +1,4 @@
-#include <phoenix/serial/LinuxSerialTransport.h>
+#include <xpllink/serial/LinuxSerialTransport.h>
 
 #include <algorithm>
 #include <fcntl.h>
@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <utility>
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     namespace
     {

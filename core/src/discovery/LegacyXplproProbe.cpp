@@ -1,6 +1,6 @@
-#include <phoenix/discovery/LegacyXplproProbe.h>
-#include <phoenix/protocol/legacy/LegacyFrame.h>
-#include <phoenix/protocol/legacy/LegacyFrameParser.h>
+#include <xpllink/discovery/LegacyXplproProbe.h>
+#include <xpllink/protocol/legacy/LegacyFrame.h>
+#include <xpllink/protocol/legacy/LegacyFrameParser.h>
 
 #include <array>
 #include <chrono>
@@ -8,7 +8,7 @@
 #include <string>
 #include <thread>
 
-namespace phoenix::discovery
+namespace xpllink::discovery
 {
     namespace
     {

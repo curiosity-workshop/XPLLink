@@ -1,6 +1,6 @@
-//   XPLRotarySwitch.h - XPLPro Add-on Library for rotary switch connections 
+//   XPLRotarySwitch.h - XPLLink add-on Library for rotary switch connections
 //   Created by Curiosity Workshop, Michael Gerlicher,  2024
-//   
+//
 //   To report problems, download updates and examples, suggest enhancements or get technical support, please visit:
 //      discord:  https://discord.gg/gzXetjEST4
 //      patreon:  www.patreon.com/curiosityworkshop
@@ -16,12 +16,12 @@
 #define XPLSWITCHES_PRESSED      0
 #define XPLSWITCHES_RELEASED     1
 
-#ifndef XPLROTARYSWITCH_MAXPINS  
-#define XPLROTARYSWITCH_MAXPINS     6                  //Default to 6. 
+#ifndef XPLROTARYSWITCH_MAXPINS
+#define XPLROTARYSWITCH_MAXPINS     6                  //Default to 6.
 #endif
 
 
-/// @brief Core class for the XPLPro Switches Addon
+/// @brief Core class for the XPLLink switches add-on
 class XPLRotarySwitch
 {
 public:
@@ -32,8 +32,8 @@ public:
     /// <summary>
     /// @brief begin
     /// </summary>
-    /// <param name="xplpro"></param>
-    void begin(XPLLink* xplpro);
+    /// <param name="link"></param>
+    void begin(XPLLink* link);
 
 
 
@@ -50,7 +50,7 @@ public:
 
 private:
 
-    XPLLink* _XP;
+    XPLLink* link_;
 
     int _switchCount;             // how many are registered
 
@@ -83,9 +83,9 @@ XPLRotarySwitch::XPLRotarySwitch(void (*switchHandler)(int inSwitchID, int inVal
 
 };
 
-void XPLRotarySwitch::begin(XPLLink* xplpro)
+void XPLRotarySwitch::begin(XPLLink* link)
 {
-    _XP = xplpro;
+    link_ = link;
     clear();
 
 }
@@ -149,20 +149,20 @@ void XPLRotarySwitch::check(void)
             {
 
             case XPLSWITCHES_DATAREFWRITE:
-                _XP->datarefWrite(_switches[i].handle, pinValue, _switches[i].element);
+                link_->datarefWrite(_switches[i].handle, pinValue, _switches[i].element);
                 break;
 
             case XPLSWITCHES_DATAREFWRITE_INVERT:
-                _XP->datarefWrite(_switches[i].handle, !pinValue, _switches[i].element);
+                link_->datarefWrite(_switches[i].handle, !pinValue, _switches[i].element);
                 break;
 
             case XPLSWITCHES_COMMANDTRIGGER:
-                if (pinValue == XPLSWITCHES_PRESSED) _XP->commandTrigger(_switches[i].handle);
+                if (pinValue == XPLSWITCHES_PRESSED) link_->commandTrigger(_switches[i].handle);
                 break;
 
             case XPLSWITCHES_COMMANDSTARTEND:
-                if (pinValue == XPLSWITCHES_PRESSED)     _XP->commandStart(_switches[i].handle);
-                if (pinValue == XPLSWITCHES_RELEASED)    _XP->commandEnd(_switches[i].handle);
+                if (pinValue == XPLSWITCHES_PRESSED)     link_->commandStart(_switches[i].handle);
+                if (pinValue == XPLSWITCHES_RELEASED)    link_->commandEnd(_switches[i].handle);
                 break;
 
 

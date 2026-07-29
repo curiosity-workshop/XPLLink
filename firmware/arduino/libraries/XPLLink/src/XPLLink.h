@@ -93,7 +93,7 @@ struct XPLLinkData
     char* inStr;
 };
 
-namespace phoenix
+namespace xpllink
 {
     class XPLLink
     {
@@ -192,5 +192,5 @@ namespace phoenix
     };
 }
 
-using XPLLink = phoenix::XPLLink;
+using XPLLink = xpllink::XPLLink;
 using inStruct = XPLLinkData;

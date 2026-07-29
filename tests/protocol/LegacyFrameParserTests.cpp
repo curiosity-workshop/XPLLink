@@ -1,6 +1,6 @@
-#include <phoenix/protocol/legacy/LegacyFrame.h>
-#include <phoenix/protocol/legacy/LegacyFrameParser.h>
-#include <phoenix/protocol/legacy/LegacyMessage.h>
+#include <xpllink/protocol/legacy/LegacyFrame.h>
+#include <xpllink/protocol/legacy/LegacyFrameParser.h>
+#include <xpllink/protocol/legacy/LegacyMessage.h>
 
 #include <cstddef>
 #include <iostream>
@@ -38,18 +38,18 @@ namespace
 
 int main()
 {
-    using phoenix::protocol::legacy::LegacyFrameParser;
-    using phoenix::protocol::legacy::CommandAction;
-    using phoenix::protocol::legacy::CommandEvent;
-    using phoenix::protocol::legacy::DataRefUpdate;
-    using phoenix::protocol::legacy::DataRefValueType;
-    using phoenix::protocol::legacy::DeviceName;
-    using phoenix::protocol::legacy::RegisterCommand;
-    using phoenix::protocol::legacy::StringDataRefUpdate;
-    using phoenix::protocol::legacy::UnknownMessage;
-    using phoenix::protocol::legacy::UpdatesRequest;
-    using phoenix::protocol::legacy::decodeFrame;
-    using phoenix::protocol::legacy::makeFrame;
+    using xpllink::protocol::legacy::LegacyFrameParser;
+    using xpllink::protocol::legacy::CommandAction;
+    using xpllink::protocol::legacy::CommandEvent;
+    using xpllink::protocol::legacy::DataRefUpdate;
+    using xpllink::protocol::legacy::DataRefValueType;
+    using xpllink::protocol::legacy::DeviceName;
+    using xpllink::protocol::legacy::RegisterCommand;
+    using xpllink::protocol::legacy::StringDataRefUpdate;
+    using xpllink::protocol::legacy::UnknownMessage;
+    using xpllink::protocol::legacy::UpdatesRequest;
+    using xpllink::protocol::legacy::decodeFrame;
+    using xpllink::protocol::legacy::makeFrame;
 
     bool passed = true;
 
@@ -86,7 +86,7 @@ int main()
 
         auto oversized = bytes("[");
         oversized.resize(
-            phoenix::protocol::legacy::maximumFrameSize + 1,
+            xpllink::protocol::legacy::maximumFrameSize + 1,
             static_cast<std::byte>('x'));
 
         const auto frames = parser.push(oversized);

@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-namespace phoenix
+namespace xpllink
 {
     XPLLink::XPLLink(Stream& stream)
         : stream_(&stream)

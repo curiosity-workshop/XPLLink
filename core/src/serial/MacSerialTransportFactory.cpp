@@ -1,8 +1,8 @@
-#include <phoenix/serial/MacSerialTransportFactory.h>
+#include <xpllink/serial/MacSerialTransportFactory.h>
 
 #include <string>
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     std::unique_ptr<transport::IByteTransport>
         MacSerialTransportFactory::create(

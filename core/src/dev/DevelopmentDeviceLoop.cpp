@@ -1,8 +1,8 @@
-#include <phoenix/dev/DevelopmentDeviceLoop.h>
+#include <xpllink/dev/DevelopmentDeviceLoop.h>
 
-#include <phoenix/logging/Log.h>
-#include <phoenix/protocol/legacy/LegacyMessage.h>
-#include <phoenix/xplane/IXPlaneBridge.h>
+#include <xpllink/logging/Log.h>
+#include <xpllink/protocol/legacy/LegacyMessage.h>
+#include <xpllink/xplane/IXPlaneBridge.h>
 
 #include <chrono>
 #include <memory>
@@ -10,7 +10,7 @@
 #include <string>
 #include <utility>
 
-namespace phoenix::dev
+namespace xpllink::dev
 {
     namespace
     {
@@ -319,6 +319,34 @@ namespace phoenix::dev
                     << "-"
                     << request.toHigh
                     << '\n';
+
+                logging::info(message.str());
+            }
+
+            void dataRefReceivedFromDevice(
+                std::string_view name,
+                std::string_view serialValue,
+                std::string_view xplaneValue,
+                std::optional<int> element) override
+            {
+                std::ostringstream message;
+
+                message
+                    << "    Device sent dataref update: "
+                    << name
+                    << ", serial "
+                    << serialValue
+                    << " -> X-Plane "
+                    << xplaneValue;
+
+                if (element)
+                {
+                    message
+                        << ", element "
+                        << *element;
+                }
+
+                message << '\n';
 
                 logging::info(message.str());
             }

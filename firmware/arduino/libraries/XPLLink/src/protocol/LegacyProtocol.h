@@ -1,6 +1,6 @@
 #pragma once
 
-namespace phoenix::protocol
+namespace xpllink::protocol
 {
     class LegacyProtocol
     {

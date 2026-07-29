@@ -1,6 +1,6 @@
-//   XPLSwitches.h - XPLPro Add-on Library for simple switch connections 
+//   XPLSwitches.h - XPLLink add-on Library for simple switch connections
 //   Created by Curiosity Workshop, Michael Gerlicher,  2024
-//   
+//
 //   To report problems, download updates and examples, suggest enhancements or get technical support, please visit:
 //      discord:  https://discord.gg/gzXetjEST4
 //      patreon:  www.patreon.com/curiosityworkshop
@@ -12,7 +12,7 @@
 
 // Parameters around the interface
 #define XPLSWITCHES_SENDTOHANDLER   0                   // Default is to send switch events to the supplied handler.  This always occurs regardless.
-#define XPLSWITCHES_DATAREFWRITE    1                   // Update dataref with switch status 
+#define XPLSWITCHES_DATAREFWRITE    1                   // Update dataref with switch status
 #define XPLSWITCHES_COMMANDTRIGGER  2                   // Trigger command with pressed
 #define XPLSWITCHES_COMMANDSTARTEND 3                   // Start command when pressed, end command when released
 #define XPLSWITCHES_DATAREFWRITE_INVERT 4               // same as datarefwrite but invert the signal
@@ -21,12 +21,12 @@
 #define XPLSWITCHES_PRESSED      0
 #define XPLSWITCHES_RELEASED     1
 
-#ifndef XPLSWITCHES_MAXSWITCHES 
+#ifndef XPLSWITCHES_MAXSWITCHES
 #define XPLSWITCHES_MAXSWITCHES     40                  //Default to 40.  This costs ~400 bytes.
 #endif
 
 
-/// @brief Core class for the XPLPro Switches Addon
+/// @brief Core class for the XPLLink switches add-on
 class XPLSwitches
 {
 public:
@@ -37,8 +37,8 @@ public:
     /// <summary>
     /// @brief begin
     /// </summary>
-    /// <param name="xplpro"></param>
-    void begin(XPLLink* xplpro);
+    /// <param name="link"></param>
+    void begin(XPLLink* link);
 
     int addPin(int inPin, byte inMode, int inHandle);
     int addPin(int inPin, byte inMode, int inHandle, int inElement);
@@ -53,7 +53,7 @@ public:
 
 private:
 
-    XPLLink* _XP;
+    XPLLink* link_;
 
     int _switchCount;             // how many are registered
 
@@ -86,9 +86,9 @@ XPLSwitches::XPLSwitches(void (*switchHandler)(int inSwitchID, int inValue))
 
 };
 
-void XPLSwitches::begin(XPLLink* xplpro)
+void XPLSwitches::begin(XPLLink* link)
 {
-    _XP = xplpro;
+    link_ = link;
     clear();
 
 }
@@ -152,20 +152,20 @@ void XPLSwitches::check(void)
             {
 
             case XPLSWITCHES_DATAREFWRITE:
-                _XP->datarefWrite(_switches[i].handle, pinValue, _switches[i].element);
+                link_->datarefWrite(_switches[i].handle, pinValue, _switches[i].element);
                 break;
 
             case XPLSWITCHES_DATAREFWRITE_INVERT:
-                _XP->datarefWrite(_switches[i].handle, !pinValue, _switches[i].element);
+                link_->datarefWrite(_switches[i].handle, !pinValue, _switches[i].element);
                 break;
 
             case XPLSWITCHES_COMMANDTRIGGER:
-                if (pinValue == XPLSWITCHES_PRESSED) _XP->commandTrigger(_switches[i].handle);
+                if (pinValue == XPLSWITCHES_PRESSED) link_->commandTrigger(_switches[i].handle);
                 break;
 
             case XPLSWITCHES_COMMANDSTARTEND:
-                if (pinValue == XPLSWITCHES_PRESSED)     _XP->commandStart(_switches[i].handle);
-                if (pinValue == XPLSWITCHES_RELEASED)    _XP->commandEnd(_switches[i].handle);
+                if (pinValue == XPLSWITCHES_PRESSED)     link_->commandStart(_switches[i].handle);
+                if (pinValue == XPLSWITCHES_RELEASED)    link_->commandEnd(_switches[i].handle);
                 break;
 
 

@@ -1,6 +1,6 @@
-//   XPLMux9685Servos.h - Library for PCA9685 PWM multiplexer 
+//   XPLMux9685Servos.h - Library for PCA9685 PWM multiplexer
 //   Created by Curiosity Workshop, Michael Gerlicher,  2024
-//   
+//
 //   To report problems, download updates and examples, suggest enhancements or get technical support, please visit:
 //      discord:  https://discord.gg/gzXetjEST4
 //      patreon:  www.patreon.com/curiosityworkshop
@@ -16,12 +16,12 @@
 
 // Parameters around the interface
 
-// Depending on your servo make, the pulse width min and max may vary, you 
+// Depending on your servo make, the pulse width min and max may vary, you
 // want these to be as small/large as possible without hitting the hard stop
 // for max range. You'll have to tweak them as necessary to match the servos you
 // have!
 
-#ifndef XPLMUX9685_MAXSERVOS 
+#ifndef XPLMUX9685_MAXSERVOS
 #define XPLMUX9685_MAXSERVOS     16                  //Default to 16.  Define this in your main sketch to override
 #endif
 
@@ -31,7 +31,7 @@
 #define XPLMUX9685_USMAX        2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 #define XPLMUX9685_SERVO_FREQ   50 // Analog servos run at ~50 Hz updates
 
-/// @brief Core class for the XPLPro Arduino library
+/// @brief Core class for the XPLLink Arduino library
 class XPLMux9685Servos
 {
 public:
@@ -44,7 +44,7 @@ public:
     /// @param muxHandler, function called when pin activity is detected, or NULL
     XPLMux9685Servos(void);
 
-    void begin(XPLLink* xplpro, uint8_t = 0x40);     // 0x40 is the default configuration for the 9685 boards
+    void begin(XPLLink* link, uint8_t = 0x40);     // 0x40 is the default configuration for the 9685 boards
     void check(inStruct* inData);
     int8_t addServo(dref_handle inHandle, int inElement, uint8_t inNumber, uint16_t inInitialVal);
     void writeServo(uint8_t inServo, uint16_t inValue);
@@ -59,7 +59,7 @@ public:
 private:
     uint8_t _findServo(dref_handle inHandle, int inElement);
 
-    XPLLink* _XP;
+    XPLLink* link_;
 
     unsigned int _servoCount;
 
@@ -86,11 +86,11 @@ private:
 XPLMux9685Servos::XPLMux9685Servos(void)
 {
 
- 
- 
+
+
 }
 
-void XPLMux9685Servos::begin(XPLLink* xplpro, uint8_t inAddress)
+void XPLMux9685Servos::begin(XPLLink* link, uint8_t inAddress)
 {
 
     // called this way, it uses the default address 0x40
@@ -121,7 +121,7 @@ void XPLMux9685Servos::begin(XPLLink* xplpro, uint8_t inAddress)
     _pwm.setPWMFreq(XPLMUX9685_SERVO_FREQ);  // Analog servos run at ~50 Hz updates
 
     delay(10);
-    _XP = xplpro;
+    link_ = link;
     clear();
 
 }
@@ -135,7 +135,7 @@ void XPLMux9685Servos::clear(void)           // call this prior to adding pins i
 void XPLMux9685Servos::check(inStruct *inData)
 {
     int servoNum = _findServo(inData->handle, inData->element);
-    if (servoNum >= 0)    
+    if (servoNum >= 0)
         switch (inData->type)
         {
         case xplmType_Int:
@@ -146,7 +146,7 @@ void XPLMux9685Servos::check(inStruct *inData)
         case xplmType_Float:
         case xplmType_FloatArray:
             writeServo(servoNum, inData->inFloat);
-            break; 
+            break;
         }
 
 
@@ -162,19 +162,19 @@ int8_t XPLMux9685Servos::addServo(dref_handle inHandle, int inElement, uint8_t i
     _servos[_servoCount].element = inElement;
     _servos[_servoCount].number = inNumber;
     _servos[_servoCount].initialVal = inInitialVal;
-     
+
     writeServo(inNumber, inInitialVal);
 
- 
+
     return _servoCount++;
 
 }
 
-void XPLMux9685Servos::writeServo(uint8_t inServo, uint16_t inMicroSeconds)   
+void XPLMux9685Servos::writeServo(uint8_t inServo, uint16_t inMicroSeconds)
 {
     _pwm.writeMicroseconds(inServo, inMicroSeconds);
     //_pwm.setPWM(inServo, 0, map(inValue, 0, 180, XPLMUX9685_SERVOMIN, XPLMUX9685_SERVOMAX));
-    
+
 
 }
 

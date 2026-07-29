@@ -1,6 +1,6 @@
-#include <phoenix/protocol/legacy/LegacyFrame.h>
-#include <phoenix/protocol/legacy/LegacyMessage.h>
-#include <phoenix/runtime/LegacyDeviceSession.h>
+#include <xpllink/protocol/legacy/LegacyFrame.h>
+#include <xpllink/protocol/legacy/LegacyMessage.h>
+#include <xpllink/runtime/LegacyDeviceSession.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -13,7 +13,7 @@
 
 namespace
 {
-    class FakeTransport final : public phoenix::transport::IByteTransport
+    class FakeTransport final : public xpllink::transport::IByteTransport
     {
     public:
         bool open() override
@@ -127,9 +127,9 @@ namespace
 
 int main()
 {
-    using phoenix::protocol::legacy::DeviceName;
-    using phoenix::runtime::LegacyDeviceSession;
-    using phoenix::runtime::LegacyDeviceSessionOptions;
+    using xpllink::protocol::legacy::DeviceName;
+    using xpllink::runtime::LegacyDeviceSession;
+    using xpllink::runtime::LegacyDeviceSessionOptions;
 
     bool passed = true;
 
@@ -169,7 +169,7 @@ int main()
 
         LegacyDeviceSession session{ transport };
         session.queueFrame(
-            phoenix::protocol::legacy::sendNameCommand);
+            xpllink::protocol::legacy::sendNameCommand);
 
         const auto result = session.tick();
 
@@ -184,7 +184,7 @@ int main()
 
         LegacyDeviceSession session{ transport };
         session.queueFrame(
-            phoenix::protocol::legacy::sendRequestCommand);
+            xpllink::protocol::legacy::sendRequestCommand);
 
         const auto result = session.tick();
 

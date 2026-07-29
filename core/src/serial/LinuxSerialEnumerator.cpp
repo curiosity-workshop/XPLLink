@@ -1,4 +1,4 @@
-#include <phoenix/serial/LinuxSerialEnumerator.h>
+#include <xpllink/serial/LinuxSerialEnumerator.h>
 
 #include <algorithm>
 #include <filesystem>
@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     namespace
     {

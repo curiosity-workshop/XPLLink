@@ -1,6 +1,6 @@
-#include <phoenix/runtime/LegacyDeviceController.h>
-#include <phoenix/runtime/LegacyDeviceSession.h>
-#include <phoenix/runtime/LegacyUpdateScheduler.h>
+#include <xpllink/runtime/LegacyDeviceController.h>
+#include <xpllink/runtime/LegacyDeviceSession.h>
+#include <xpllink/runtime/LegacyUpdateScheduler.h>
 
 #include <algorithm>
 #include <chrono>
@@ -15,7 +15,7 @@
 
 namespace
 {
-    class FakeTransport final : public phoenix::transport::IByteTransport
+    class FakeTransport final : public xpllink::transport::IByteTransport
     {
     public:
         bool open() override
@@ -112,10 +112,10 @@ namespace
         std::vector<std::byte> written_;
     };
 
-    class FakeXPlaneBridge final : public phoenix::xplane::IXPlaneBridge
+    class FakeXPlaneBridge final : public xpllink::xplane::IXPlaneBridge
     {
     public:
-        phoenix::xplane::DataRefLookupResult findDataRef(
+        xpllink::xplane::DataRefLookupResult findDataRef(
             std::string_view name) override
         {
             dataRefLookupNames.push_back(std::string{ name });
@@ -126,25 +126,25 @@ namespace
             };
         }
 
-        phoenix::xplane::CommandLookupResult findCommand(
+        xpllink::xplane::CommandLookupResult findCommand(
             std::string_view) override
         {
             return { false };
         }
 
         void writeDataRef(
-            const phoenix::xplane::DataRefWrite&) override
+            const xpllink::xplane::DataRefWrite&) override
         {
         }
 
-        phoenix::xplane::DataRefReadResult readDataRef(
-            const phoenix::xplane::DataRefReadRequest& request) override
+        xpllink::xplane::DataRefReadResult readDataRef(
+            const xpllink::xplane::DataRefReadRequest& request) override
         {
             readRequests.push_back(request);
 
             return {
                 true,
-                request.preferredType.value_or(phoenix::xplane::DataRefTypeInt),
+                request.preferredType.value_or(xpllink::xplane::DataRefTypeInt),
                 currentValue,
                 request.element
             };
@@ -178,10 +178,10 @@ namespace
         {
         }
 
-        int dataRefType = phoenix::xplane::DataRefTypeInt;
+        int dataRefType = xpllink::xplane::DataRefTypeInt;
         std::string currentValue = "1";
         std::vector<std::string> dataRefLookupNames;
-        std::vector<phoenix::xplane::DataRefReadRequest> readRequests;
+        std::vector<xpllink::xplane::DataRefReadRequest> readRequests;
     };
 
     bool expect(bool condition, std::string_view message)
@@ -198,10 +198,10 @@ namespace
 
 int main()
 {
-    using phoenix::runtime::LegacyDeviceController;
-    using phoenix::runtime::LegacyDeviceSession;
-    using phoenix::runtime::LegacyDeviceSessionOptions;
-    using phoenix::runtime::LegacyUpdateScheduler;
+    using xpllink::runtime::LegacyDeviceController;
+    using xpllink::runtime::LegacyDeviceSession;
+    using xpllink::runtime::LegacyDeviceSessionOptions;
+    using xpllink::runtime::LegacyUpdateScheduler;
 
     bool passed = true;
 
@@ -344,7 +344,7 @@ int main()
             budgetSession,
             budgetController,
             budgetXPlane,
-            phoenix::runtime::LegacyUpdateSchedulerOptions{
+            xpllink::runtime::LegacyUpdateSchedulerOptions{
                 .maxFramesPerTick = 2
             }
         };
@@ -394,7 +394,7 @@ int main()
         FakeTransport bucketTransport;
         FakeXPlaneBridge bucketXPlane;
         bucketXPlane.currentValue = "1002.4";
-        bucketXPlane.dataRefType = phoenix::xplane::DataRefTypeFloat;
+        bucketXPlane.dataRefType = xpllink::xplane::DataRefTypeFloat;
 
         LegacyDeviceSession bucketSession{
             bucketTransport,
@@ -458,7 +458,7 @@ int main()
     {
         FakeTransport dataTransport;
         FakeXPlaneBridge dataXPlane;
-        dataXPlane.dataRefType = phoenix::xplane::DataRefTypeData;
+        dataXPlane.dataRefType = xpllink::xplane::DataRefTypeData;
         dataXPlane.currentValue =
             std::string{ {'A', '\0', 'B', 'C', '\0', 'D'} };
 

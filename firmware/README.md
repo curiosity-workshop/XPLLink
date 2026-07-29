@@ -1,4 +1,7 @@
-Phoenix firmware libraries live here.
+# XPLLink firmware
 
-The XPLLink Arduino library is kept as one distributable package while its internals
-are split by protocol, transport, and platform support.
+Firmware-side libraries live here. The Arduino package is kept as one
+distributable library while its implementation is split into protocol,
+transport, and platform layers.
+
+See `arduino/libraries/XPLLink/README.md` for installation and usage.

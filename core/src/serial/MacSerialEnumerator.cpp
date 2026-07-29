@@ -1,11 +1,11 @@
-#include <phoenix/serial/MacSerialEnumerator.h>
+#include <xpllink/serial/MacSerialEnumerator.h>
 
 #include <algorithm>
 #include <filesystem>
 #include <string>
 #include <vector>
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     namespace
     {

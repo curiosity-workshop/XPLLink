@@ -1,10 +1,10 @@
-#include <phoenix/protocol/legacy/LegacyMessage.h>
+#include <xpllink/protocol/legacy/LegacyMessage.h>
 
 #include <cstdlib>
 #include <string_view>
 #include <vector>
 
-namespace phoenix::protocol::legacy
+namespace xpllink::protocol::legacy
 {
     namespace
     {

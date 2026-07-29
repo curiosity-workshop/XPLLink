@@ -1,10 +1,10 @@
-#include <phoenix/serial/WindowsSerialTransportFactory.h>
+#include <xpllink/serial/WindowsSerialTransportFactory.h>
 
-#include <phoenix/serial/WindowsSerialTransport.h>
+#include <xpllink/serial/WindowsSerialTransport.h>
 
 #include <string>
 
-namespace phoenix::serial
+namespace xpllink::serial
 {
     std::unique_ptr<transport::IByteTransport>
         WindowsSerialTransportFactory::create(
